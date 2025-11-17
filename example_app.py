@@ -33,8 +33,10 @@ class TelemetryApp:
         self.running = False
 
         # Configuration
+        import sys
+        target_process = 'Le Mans Ultimate' if sys.platform == 'win32' else 'python'
         self.config = {
-            'target_process': 'python',  # Use 'python' on macOS for testing
+            'target_process': target_process,  # 'Le Mans Ultimate' on Windows, 'python' on other platforms
             'poll_interval': 0.01,  # 100Hz
             'output_dir': './telemetry_output',
         }
@@ -66,9 +68,9 @@ class TelemetryApp:
             lap_data: List of telemetry samples for the lap
             lap_summary: Summary data (lap time, sectors, etc.)
         """
-        print(f"\n🏁 Lap {lap_summary['lap']} completed!")
-        print(f"   Lap time: {lap_summary.get('lap_time', 0.0):.3f}s")
-        print(f"   Samples: {lap_summary.get('samples_count', 0)}")
+        print(f"\n*** Lap {lap_summary['lap']} completed!")
+        print(f"    Lap time: {lap_summary.get('lap_time', 0.0):.3f}s")
+        print(f"    Samples: {lap_summary.get('samples_count', 0)}")
 
         # Get session info from telemetry reader
         session_info = self.telemetry_reader.get_session_info()
@@ -92,15 +94,15 @@ class TelemetryApp:
             self.laps_saved += 1
             self.samples_collected += len(lap_data)
 
-            print(f"   ✅ Saved to: {filepath}")
-            print(f"   Total laps saved: {self.laps_saved}")
+            print(f"    [OK] Saved to: {filepath}")
+            print(f"    Total laps saved: {self.laps_saved}")
 
         except Exception as e:
-            print(f"   ❌ Error saving lap: {e}")
+            print(f"    [ERROR] Error saving lap: {e}")
 
     def signal_handler(self, signum, frame):
         """Handle shutdown signals gracefully"""
-        print("\n\n🛑 Shutting down gracefully...")
+        print("\n\nShutting down gracefully...")
         self.stop()
 
     def start(self):
@@ -166,7 +168,7 @@ class TelemetryApp:
             print("No laps saved")
 
         print()
-        print("Goodbye! 👋")
+        print("Goodbye!")
         sys.exit(0)
 
     def _print_status(self, status):
@@ -181,8 +183,8 @@ class TelemetryApp:
         samples = status.get('samples_buffered', 0)
 
         print(f"[{state.value if hasattr(state, 'value') else state}] "
-              f"Process: {'✓' if process_detected else '✗'} | "
-              f"Telemetry: {'✓' if telemetry_available else '✗'} | "
+              f"Process: {'YES' if process_detected else 'NO'} | "
+              f"Telemetry: {'YES' if telemetry_available else 'NO'} | "
               f"Lap: {lap} | "
               f"Samples: {samples}")
 
