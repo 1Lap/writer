@@ -1,6 +1,8 @@
 """Process monitoring for auto-detection of LMU"""
 
 import time
+import sys
+from pathlib import Path
 import psutil
 from typing import Dict, Any, Optional
 
@@ -32,6 +34,11 @@ class ProcessMonitor:
         Returns:
             True if process found, False otherwise
         """
+        # Quick self-check so environments that restrict process listing still
+        # detect the current Python interpreter when it matches the target.
+        if self._matches_current_process():
+            return True
+
         try:
             for proc in psutil.process_iter(['name']):
                 try:
@@ -43,16 +50,29 @@ class ProcessMonitor:
                     # Process disappeared or we don't have permission to access it
                     continue
         except (psutil.Error, PermissionError):
+            # If we can't iterate processes, fall back to inspecting the
+            # current Python process.
             return self._matches_current_process()
 
-        return False
+        # If we didn't match while iterating, also check the current process
+        # name as a last resort (useful in constrained environments where
+        # process iteration may be limited).
+        return self._matches_current_process()
 
     def _matches_current_process(self) -> bool:
         """Fallback when process iteration is not permitted."""
+        target = self.target_process.lower()
+
+        # Use the Python executable name as a lightweight fallback that doesn't
+        # require process iteration permissions.
+        exe_name = Path(sys.executable).name.lower()
+        if target in exe_name:
+            return True
+
         try:
             current = psutil.Process()
             proc_name = current.name()
-            if proc_name and self.target_process.lower() in proc_name.lower():
+            if proc_name and target in proc_name.lower():
                 self._process = current
                 return True
         except (psutil.Error, PermissionError):
