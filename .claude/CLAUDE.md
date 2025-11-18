@@ -4,21 +4,21 @@
 
 This is a background telemetry logger for Le Mans Ultimate (LMU) that automatically captures and exports telemetry data to CSV files. The project uses a **cross-platform development strategy**: develop on macOS with mocks, then test/deploy on Windows with real LMU data.
 
-**Current Status**: Phases 1-5 complete (core system functional), ready for Phase 6 (Windows testing)
+**Current Status**: Phases 1-6 complete (core system fully functional, tested on Windows with live LMU), Phase 7 in progress (executable built, final validation pending)
 
 ## Development Philosophy
 
 ### Test-Driven Development (TDD)
 - **ALWAYS write tests before code** when implementing new features
 - Tests should fail first, then write code to make them pass
-- Current coverage: **61/61 tests passing, 100% coverage of implemented modules**
+- Current coverage: **60/60 tests passing, 100% coverage of implemented modules**
 - If tests can't pass after trying, ask user before modifying tests
 
 ### Cross-Platform Architecture
 - Abstract platform-specific code behind interfaces
 - `src/telemetry/telemetry_interface.py` - defines `TelemetryReaderInterface`
 - `src/telemetry/telemetry_mock.py` - macOS implementation (simulates telemetry)
-- `src/telemetry/telemetry_real.py` - Windows implementation (TODO: Phase 6)
+- `src/telemetry/telemetry_real.py` - Windows implementation ✅ COMPLETE
 - Platform detection: `sys.platform == 'win32'` → real, else → mock
 
 ## Project Architecture
@@ -38,22 +38,31 @@ This is a background telemetry logger for Le Mans Ultimate (LMU) that automatica
 3. **SessionManager** (`src/session_manager.py`)
    - Tracks session state: IDLE → DETECTED → LOGGING → (lap complete)
    - Detects lap changes by monitoring lap number
-   - Buffers telemetry samples for current lap
+   - Buffers telemetry samples for current lap (with automatic normalization)
    - Generates unique session IDs (timestamp-based)
+   - Integrates SampleNormalizer for data conversion
 
-4. **TelemetryLoop** (`src/telemetry_loop.py`)
+4. **SampleNormalizer** (`src/mvp_format.py`)
+   - Converts raw telemetry to canonical MVP format
+   - Handles fractional to percentage conversion (0-1 → 0-100% for throttle/brake/steering)
+   - Sector estimation using track length
+   - Ensures consistent field naming and units
+
+5. **TelemetryLoop** (`src/telemetry_loop.py`)
    - Main polling loop (~100Hz by default)
    - Integrates ProcessMonitor, SessionManager, TelemetryReader
    - Triggers callbacks on lap completion
    - Supports pause/resume, start/stop
 
-5. **CSVFormatter** (`src/csv_formatter.py`)
-   - Formats telemetry data matching `example.csv` structure
-   - 6 sections: player metadata, lap summary, session metadata, car setup, header, samples
-   - Handles 100+ fields per sample
-   - See `example.csv` for exact format reference
+6. **CSVFormatter** (`src/csv_formatter.py`)
+   - Formats telemetry data to **LMUTelemetry v2 MVP format**
+   - 2 sections: metadata preamble (Key,Value pairs) + telemetry samples (12 columns)
+   - Metadata: Format, Version, Player, TrackName, CarName, SessionUTC, LapTime [s], TrackLen [m]
+   - 12 telemetry columns: LapDistance, LapTime, Sector, Speed, EngineRevs, ThrottlePercentage, BrakePercentage, Steer, Gear, X, Y, Z
+   - File size: ~1 MB per lap (down from ~11 MB in old format)
+   - See `example.csv` and `telemetry_format_analysis.md` for exact format specification
 
-6. **FileManager** (`src/file_manager.py`)
+7. **FileManager** (`src/file_manager.py`)
    - Saves CSV files to disk with configurable naming
    - Default: `{session_id}_lap{lap}.csv`
    - Sanitizes filenames, manages output directory
@@ -87,38 +96,43 @@ pytest --cov=src --cov-report=html
 ### Test Coverage by Module
 - `test_telemetry_mock.py` - 7 tests
 - `test_process_monitor.py` - 5 tests
-- `test_session_manager.py` - 7 tests
+- `test_session_manager.py` - 8 tests
 - `test_telemetry_loop.py` - 13 tests
-- `test_csv_formatter.py` - 13 tests
+- `test_csv_formatter.py` - 6 tests (updated for MVP format)
+- `test_sample_normalizer.py` - 5 tests (NEW - MVP format normalization)
 - `test_file_manager.py` - 16 tests
 
 ## Phase Status
 
-### ✅ Completed (Phases 1-5)
-- [x] Mock telemetry system
-- [x] Process monitoring & auto-detection
-- [x] Session management & lap tracking
-- [x] Main telemetry loop (~100Hz)
-- [x] CSV formatter (matches example.csv)
-- [x] File management system
-- [x] Integration example app
+### ✅ Completed (Phases 1-6)
+- [x] Phase 1: Setup & Cross-Platform Development Foundation
+- [x] Phase 2: Core Logger Service Development
+- [x] Phase 3: CSV Formatter Implementation (MVP format)
+- [x] Phase 4: File Management & Configuration
+- [x] Phase 5: System Tray UI & User Controls
+- [x] Phase 6: Windows Testing & Real Telemetry
+  - [x] `RealTelemetryReader` implemented using `pyRfactor2SharedMemory`
+  - [x] Tested with live LMU on Windows
+  - [x] CSV output validated (MVP format)
+  - [x] All 60 tests passing
+  - [x] MVP format refactor complete
+    - [x] `SampleNormalizer` for data conversion
+    - [x] `CSVFormatter` updated to 12-column format
+    - [x] Input scaling (0-100% for throttle/brake/steer)
 
-### 🔄 Current Phase: Phase 6 - Windows Testing
-**You are here** - Ready to test on Windows with real LMU
+### 🔄 Current Phase: Phase 7 - Distribution
+**Status**: Executable built, final validation pending
 
-Tasks:
-1. Implement `RealTelemetryReader` in `src/telemetry/telemetry_real.py`
-   - Use `pyRfactor2SharedMemory` library
-   - Map shared memory fields to our telemetry dict format
-   - Reference: `telemetry_mock.py` for field structure
-2. Test with live LMU on Windows
-3. Verify CSV output matches expected format
-4. Fix any platform-specific issues
+Completed:
+- [x] PyInstaller build script (`build.bat`)
+- [x] Executable created (`LMU_Telemetry_Logger_v1.0/LMU_Telemetry_Logger.exe`)
+- [x] User documentation (`USER_GUIDE.md`)
 
-### ⏳ Pending: Phase 7 - Distribution
-- Build standalone .exe with PyInstaller
-- Optional: System tray UI (pystray)
-- Final documentation
+Remaining:
+- [ ] Final validation of v1.0 executable
+- [ ] Performance optimization (address 20Hz vs 100Hz capture rate issue)
+- [ ] Documentation review and updates
+- [ ] Release preparation
 
 ## Important Code Patterns
 
@@ -142,20 +156,27 @@ loop = TelemetryLoop({'on_lap_complete': on_lap_complete})
 ```
 
 ### 3. Telemetry Data Structure
-All telemetry dictionaries should include these key fields:
+
+**Raw telemetry** (from TelemetryReader) includes 100+ fields - see `telemetry_mock.py` for complete list.
+
+**Normalized telemetry** (after SampleNormalizer) uses canonical MVP field names:
 ```python
 {
-    'lap': int,
-    'speed': float,  # km/h
-    'engine_rpm': float,
-    'lap_distance': float,  # meters
-    'total_distance': float,
-    'brake_temp': {'fl': float, 'fr': float, 'rl': float, 'rr': float},
-    'tyre_temp': {'fl': float, 'fr': float, 'rl': float, 'rr': float},
-    # ... 100+ more fields
+    'LapDistance [m]': float,      # Lap distance in meters
+    'LapTime [s]': float,           # Lap time in seconds
+    'Sector [int]': int,            # Current sector (0-3)
+    'Speed [km/h]': float,          # Speed in km/h
+    'EngineRevs [rpm]': float,      # Engine RPM
+    'ThrottlePercentage [%]': float,  # 0-100%
+    'BrakePercentage [%]': float,     # 0-100%
+    'Steer [%]': float,               # -100 to +100%
+    'Gear [int]': int,              # Current gear
+    'X [m]': float,                 # X position (or None)
+    'Y [m]': float,                 # Y position (or None)
+    'Z [m]': float,                 # Z position (or None)
 }
 ```
-See `telemetry_mock.py` for complete field list.
+See `telemetry_format_analysis.md` for complete MVP format specification.
 
 ## Common Commands
 
@@ -197,10 +218,13 @@ gh pr create --draft
 ## Important Files & References
 
 ### Key Files
-- `example.csv` - **Reference CSV format** (ground truth for CSV structure)
+- `telemetry_format_analysis.md` - **MVP format specification** (LMUTelemetry v2, 12 channels)
+- `example.csv` - **Reference CSV output** (MVP format example)
+- `MVP_LOGGING_PLAN.md` - MVP format implementation checklist
 - `TECHNICAL_SPEC.md` - Detailed component specifications
 - `TELEMETRY_LOGGER_PLAN.md` - High-level architecture and plan
 - `example_app.py` - Working integration example
+- `BUGS.md` - Known issues and performance notes
 
 ### Configuration Patterns
 ```python
@@ -221,37 +245,33 @@ config = {
 }
 ```
 
-## Windows-Specific Notes (Phase 6)
+## Known Issues & Performance Notes
 
-### When implementing RealTelemetryReader:
+### Performance Issue: Low Capture Rate (From BUGS.md)
+- **Target**: 100Hz (0.01s poll interval)
+- **Actual**: ~20Hz observed in testing
+- **Impact**: Lower resolution data, may miss fast transients
+- **Potential causes**:
+  - Shared memory read overhead
+  - CSV formatting blocking the loop
+  - Windows I/O latency
+- **Status**: Open - needs profiling and optimization
+- **File**: See `BUGS.md` for full details and tracking
 
-1. **Install Windows dependencies first:**
-   ```bash
-   pip install -r requirements-windows.txt
-   ```
+### Windows-Specific Notes
 
-2. **Import pyRfactor2SharedMemory:**
-   ```python
-   import pyRfactor2SharedMemory as sm
-   ```
+**RealTelemetryReader** (completed):
+- Uses `pyRfactor2SharedMemory` library for shared memory access
+- Requires LMU to be running for `is_available()` to return True
+- Falls back to MockTelemetryReader if library not installed
+- Handles unit conversions (Kelvin→Celsius, m/s→km/h, etc.)
+- Maps 100+ shared memory fields to telemetry dictionary
 
-3. **Map shared memory to our format:**
-   - Study the library's data structure
-   - Match field names to our telemetry dict
-   - Handle conversion (units, data types)
-   - Reference `telemetry_mock.py` for target structure
-
-4. **Test with LMU running:**
-   - Start LMU
-   - Run example_app.py
-   - Drive a lap
-   - Check output CSV matches example.csv format
-
-5. **Common issues to watch for:**
-   - Shared memory not available (LMU not running)
-   - Field name mismatches
-   - Unit conversions (e.g., m/s vs km/h)
-   - Missing fields (use defaults like mock does)
+**Testing on Windows**:
+- Install dependencies: `pip install -r requirements-windows.txt`
+- Tests use mocking to avoid requiring live LMU
+- Integration testing requires LMU running
+- Check `BUGS.md` for known platform-specific issues
 
 ## Code Style & Conventions
 
@@ -277,21 +297,22 @@ config = {
 - Windows: Ensure LMU.exe is running
 
 ### CSV format doesn't match?
-- Compare with `example.csv` line by line
-- Check CSVFormatter field order
-- Verify all 6 sections present
+- Compare with `example.csv` line by line (MVP format reference)
+- Should have metadata preamble followed by 12-column telemetry data
+- Check field names match exactly (e.g., `LapDistance [m]`, not `LapDistance`)
+- Verify input percentages are 0-100, not 0-1
+- See `telemetry_format_analysis.md` for complete specification
 
 ## Next Session Checklist
 
-When continuing work on Windows:
+When continuing development:
 
-1. ✅ Pull latest code from git
-2. ✅ Create Windows virtual environment
-3. ✅ Install dependencies (including requirements-windows.txt)
-4. ✅ Run tests to verify everything works
-5. ✅ Read this file for context
-6. ✅ Start Phase 6: Implement RealTelemetryReader
-7. ✅ Test with live LMU
+1. Pull latest code from git
+2. Activate virtual environment (`venv\Scripts\activate`)
+3. Run tests to verify everything works (`pytest -v`)
+4. Read this file for context
+5. Check `BUGS.md` for current known issues
+6. Review Phase 7 remaining tasks (see Phase Status above)
 
 ## Questions to Ask User
 
@@ -303,19 +324,21 @@ Before making significant changes:
 
 ## Success Criteria
 
-### For Phase 6 (Windows Testing):
-- [ ] RealTelemetryReader implemented
-- [ ] Reads data from LMU shared memory
-- [ ] Example app works on Windows with live LMU
-- [ ] CSV files generated match example.csv format
-- [ ] All existing tests still pass
-- [ ] New tests for RealTelemetryReader (if needed)
+### ✅ Phase 6 (Windows Testing) - COMPLETE
+- [x] RealTelemetryReader implemented
+- [x] Reads data from LMU shared memory
+- [x] Example app works on Windows with live LMU
+- [x] CSV files generated match MVP format specification
+- [x] All 60 tests passing (with proper mocking for cross-platform)
+- [x] MVP format refactor complete
 
-### For Phase 7 (Distribution):
-- [ ] PyInstaller builds working .exe
-- [ ] .exe runs standalone (no Python required)
-- [ ] Documentation complete
-- [ ] Ready for release
+### 🔄 Phase 7 (Distribution) - IN PROGRESS
+- [x] PyInstaller builds working .exe
+- [x] Basic user documentation (USER_GUIDE.md)
+- [ ] .exe final validation and testing
+- [ ] Performance optimization (20Hz→100Hz issue)
+- [ ] Documentation review and polish
+- [ ] Release preparation (version, changelog, etc.)
 
 ---
 

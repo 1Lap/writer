@@ -21,7 +21,7 @@ class MockTelemetryReader(TelemetryReaderInterface):
         self.lap = 1
         self.lap_start_time = self.start_time
 
-        # Default to Bahrain from example.csv
+        # Default to Bahrain reference lap from telemetry_format_analysis.md
         self.track_name = "Bahrain International Circuit"
         self.track_length = 5386.80  # meters
         self.player_name = "Dev User"
@@ -52,7 +52,7 @@ class MockTelemetryReader(TelemetryReaderInterface):
         - Speed varies (slower in corners, faster on straights)
         - Lap distance increments based on time
         - Lap completion triggers when lap distance resets
-        - All fields from example.csv are populated
+        - All fields required by the MVP CSV schema are populated
         """
         elapsed = time.time() - self.lap_start_time
         total_elapsed = time.time() - self.start_time
@@ -75,15 +75,15 @@ class MockTelemetryReader(TelemetryReaderInterface):
         speed_variation = math.sin(lap_distance / 1000) * 20
         speed = 256 + speed_variation  # km/h
 
-        # Calculate sector times (simplified - divide track into 3 sections)
-        sector = int((lap_distance / self.track_length) * 3) + 1
+        # Calculate sector index (0,1,2)
+        sector_index = min(2, int((lap_distance / self.track_length) * 3))
 
         # Simulate RPM based on speed
         rpm = 7267 + (speed_variation * 10)
 
         # Simulate throttle/brake based on speed
-        throttle = 1.0 if speed > 200 else 0.5
-        brake = 0.1 if speed < 180 else 0.0
+        throttle = 100.0 if speed > 200 else 55.0
+        brake = 8.0 if speed < 180 else 0.0
 
         # Simulate position (moving around track)
         angle = (lap_distance / self.track_length) * 2 * math.pi
@@ -105,9 +105,10 @@ class MockTelemetryReader(TelemetryReaderInterface):
             'lap_distance': lap_distance,
             'total_distance': total_distance,
             'lap_time': elapsed,
-            'sector1_time': 0.0 if sector < 2 else 33.966,
-            'sector2_time': 0.0 if sector < 3 else 51.070,
-            'sector3_time': 0.0 if sector < 4 else 27.957,
+            'sector_index': sector_index,
+            'sector1_time': 0.0 if sector_index < 1 else 33.966,
+            'sector2_time': 0.0 if sector_index < 2 else 51.070,
+            'sector3_time': 0.0,
 
             # Track Info
             'track_id': 3,
@@ -124,7 +125,7 @@ class MockTelemetryReader(TelemetryReaderInterface):
             'gear': 6,
             'throttle': throttle,
             'brake': brake,
-            'steering': math.sin(elapsed) * 0.1,  # Small steering input
+            'steering': math.sin(elapsed) * 35.0,  # Percent steering input
             'clutch': 0.0,
             'drs': 0,
 

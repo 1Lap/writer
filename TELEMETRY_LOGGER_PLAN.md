@@ -1,7 +1,7 @@
 # LMU Telemetry Logger Implementation Plan (REVISED)
 
 ## Overview
-Build a telemetry logger for Le Mans Ultimate that captures real-time game data and exports it to CSV files matching the format in `example.csv`.
+Build a telemetry logger for Le Mans Ultimate that captures real-time game data and exports it to CSV files matching the MVP schema defined in `telemetry_format_analysis.md` (metadata preamble + 12 canonical channels).
 
 **Key Change**: Leverage existing open-source projects to significantly reduce development time from 2-3 weeks to **3-5 days**.
 
@@ -14,7 +14,7 @@ Build a telemetry logger for Le Mans Ultimate that captures real-time game data 
    - Auto-detects when LMU is running
    - Reads telemetry from shared memory
    - Buffers and writes CSV files
-4. **CSV Formatter** - Converts raw telemetry to CSV format matching example.csv
+4. **CSV Formatter** - Converts raw telemetry to the LMUTelemetry v2 MVP format
 5. **File Manager** - Handles CSV file creation and management
 6. **System Tray UI (Optional)** - Simple control interface
    - Shows logging status
@@ -90,7 +90,7 @@ Build a telemetry logger for Le Mans Ultimate that captures real-time game data 
 ✅ **Background Service** - Runs silently, no intervention needed
 ✅ **System Tray Control** - Easy status monitoring and control
 ✅ **Auto-Start** - Optional Windows startup integration
-✅ **CSV Format** - Matches example.csv structure exactly
+✅ **CSV Format** - Matches LMUTelemetry v2 MVP structure
 ✅ **Cross-Platform Dev** - Develop on macOS, build/test on Windows
 
 ### Technical Stack
@@ -174,7 +174,7 @@ class TelemetryReader:
 ### Mock Data Strategy
 
 The mock telemetry system will:
-- Parse `example.csv` to understand data structure
+- Study `telemetry_format_analysis.md` to understand the metadata + 12-column layout
 - Generate realistic values that change over time
 - Simulate lap progression (lap distance incrementing)
 - Trigger lap completion events
@@ -195,7 +195,7 @@ class MockTelemetryReader:
         self.start_time = time.time()
         self.lap = 1
         self.lap_start_time = self.start_time
-        self.track_length = 5386.80  # Bahrain from example.csv
+        self.track_length = 5386.80  # Bahrain from the LMU reference lap
 
     def read(self):
         """Return telemetry data matching rF2 structure"""
@@ -239,7 +239,7 @@ class MockTelemetryReader:
             'position_y': 7.30,
             'position_z': -218.97 + (lap_distance * 0.01),
 
-            # ... all other fields from example.csv
+            # ... all other fields defined in telemetry_format_analysis.md
         }
 ```
 
@@ -262,10 +262,10 @@ class MockTelemetryReader:
 ### 1.2 Create Mock Telemetry System (macOS Development)
 - **Purpose**: Allows development without Windows/LMU
 - **Tasks**:
-  - Study example.csv to understand data structure
+  - Study `telemetry_format_analysis.md` to understand data structure
   - Review rF2SharedMemoryMapPlugin documentation for field mapping
   - Create `src/telemetry/mock_telemetry.py`:
-    - Mock all fields from example.csv
+    - Mock all fields from the MVP schema
     - Generate realistic values (speed, position, RPM, etc.)
     - Support multiple lap scenarios
     - Simulate session state changes
@@ -358,21 +358,19 @@ lmu-telemetry-logger/
 ## Phase 3: CSV Formatter Implementation
 
 ### 3.1 Build CSV Writer
-- **Format sections** (matching example.csv):
-  1. Player metadata row (line 1)
-  2. Lap summary header + data (lines 2-3)
-  3. Session metadata header + data (lines 4-5)
-  4. Car setup header + data (lines 6-7)
-  5. Telemetry samples header (line 8)
-  6. Telemetry samples (lines 9+, one row per sample)
-- **Reference**: Study example.csv structure for exact format
+- **Format sections** (matching LMUTelemetry v2 MVP spec):
+  1. Metadata preamble (Format/Version/Player/Track/Car/SessionUTC/LapTime/TrackLen + extras)
+  2. Blank separator line
+  3. Telemetry header for the 12 required channels
+  4. Telemetry samples sorted by LapDistance [m]
+- **Reference**: Study `telemetry_format_analysis.md` for exact header text and ordering
 
 ### 3.2 Data Mapping
 - **Create mapping layer**:
-  - Map pyRfactor2SharedMemory data fields to CSV columns
-  - Handle unit conversions (e.g., m/s to km/h)
-  - Format floating point precision (match example.csv)
-  - Handle missing/invalid data (use 0.0 or appropriate defaults)
+  - Map pyRfactor2SharedMemory data fields to canonical headers (`LapDistance [m]`, `ThrottlePercentage [%]`, ...)
+  - Handle unit conversions (m/s → km/h, 0–1 inputs → 0–100 %)
+  - Enforce per-column precision rules (LapDistance/LapTime ≥3 decimals, inputs ≥2)
+  - Emit blanks for missing coordinates (viewer reads them as nulls)
 - **Reference TinyPedal** for field mappings
 
 ### 3.3 Field Calculations
@@ -477,7 +475,7 @@ lmu-telemetry-logger/
 - **In-game testing**:
   - Practice sessions (single lap)
   - Race sessions (multiple laps)
-  - Verify CSV output matches example.csv format
+  - Verify CSV output matches the LMUTelemetry v2 MVP format
   - Compare with existing telemetry tools for accuracy
   - Performance monitoring (CPU/memory usage should be minimal)
   - Test auto-start/stop behavior
@@ -573,7 +571,7 @@ lmu-telemetry-logger/
    - Developer guide (building from source)
    - Troubleshooting guide
 7. Test suite (unit + integration tests)
-8. Example CSV outputs matching example.csv format
+8. Example CSV outputs matching LMUTelemetry v2 MVP format
 
 ---
 
@@ -587,7 +585,7 @@ lmu-telemetry-logger/
 - **Phase 1.1**: Development environment setup (1 hour)
   - Python venv, git init, project structure
 - **Phase 1.2**: Create mock telemetry system (3-4 hours)
-  - Parse example.csv for data structure
+  - Follow `telemetry_format_analysis.md` for the trimmed schema
   - Implement MockTelemetryReader with realistic data
   - Platform detection and abstraction layer
 - **Phase 1.3**: Study references (2-3 hours)
@@ -604,7 +602,7 @@ lmu-telemetry-logger/
 
 #### Day 3: CSV Formatter (7-8 hours) - macOS
 - **Phase 3.1**: CSV writer implementation (4-5 hours)
-  - All 6 sections matching example.csv
+  - Metadata block + 12-column rows per MVP spec
   - Test with mock data
 - **Phase 3.2**: Data mapping layer (2 hours)
 - **Phase 3.3**: Field calculations (sector times, distances) (2 hours)
@@ -633,7 +631,7 @@ lmu-telemetry-logger/
 - **Phase 6.3**: Live testing with LMU (5-6 hours)
   - Practice sessions (multiple laps)
   - Race sessions
-  - Verify CSV output matches example.csv
+  - Verify CSV output matches LMUTelemetry v2 MVP format
   - Test auto-detection, error handling
   - Performance monitoring
 

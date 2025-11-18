@@ -49,8 +49,13 @@ class TestTelemetryLoop:
         assert status['state'] == SessionState.IDLE
         assert status['process_detected'] is False
 
-    def test_detects_process(self):
+    @patch('src.telemetry_loop.get_telemetry_reader')
+    def test_detects_process(self, mock_get_reader):
         """Should detect when target process is running"""
+        # Mock the telemetry reader to always use MockTelemetryReader
+        from src.telemetry.telemetry_mock import MockTelemetryReader
+        mock_get_reader.return_value = MockTelemetryReader()
+
         # Use python process which we know is running
         loop = TelemetryLoop({'target_process': 'python'})
         loop.start()
@@ -61,8 +66,13 @@ class TestTelemetryLoop:
         # State might be DETECTED or LOGGING depending on telemetry availability
         assert status['state'] in [SessionState.DETECTED, SessionState.LOGGING]
 
-    def test_starts_logging_when_telemetry_available(self):
+    @patch('src.telemetry_loop.get_telemetry_reader')
+    def test_starts_logging_when_telemetry_available(self, mock_get_reader):
         """Should transition to LOGGING when telemetry is available"""
+        # Mock the telemetry reader to always use MockTelemetryReader
+        from src.telemetry.telemetry_mock import MockTelemetryReader
+        mock_get_reader.return_value = MockTelemetryReader()
+
         loop = TelemetryLoop({'target_process': 'python'})
         loop.start()
 
@@ -76,8 +86,13 @@ class TestTelemetryLoop:
         assert status2['state'] == SessionState.LOGGING
         assert status2['telemetry_available'] is True
 
-    def test_buffers_samples(self):
+    @patch('src.telemetry_loop.get_telemetry_reader')
+    def test_buffers_samples(self, mock_get_reader):
         """Should buffer telemetry samples"""
+        # Mock the telemetry reader to always use MockTelemetryReader
+        from src.telemetry.telemetry_mock import MockTelemetryReader
+        mock_get_reader.return_value = MockTelemetryReader()
+
         loop = TelemetryLoop({'target_process': 'python'})
         loop.start()
 
@@ -95,8 +110,13 @@ class TestTelemetryLoop:
         # Should have buffered samples
         assert len(loop.session_manager.lap_samples) > initial_count
 
-    def test_lap_completion_callback(self):
+    @patch('src.telemetry_loop.get_telemetry_reader')
+    def test_lap_completion_callback(self, mock_get_reader):
         """Should trigger callback on lap completion"""
+        # Mock the telemetry reader to always use MockTelemetryReader
+        from src.telemetry.telemetry_mock import MockTelemetryReader
+        mock_get_reader.return_value = MockTelemetryReader()
+
         callback_data = {'called': False, 'lap_data': None, 'lap_summary': None}
 
         def on_lap_complete(lap_data, lap_summary):
@@ -137,8 +157,13 @@ class TestTelemetryLoop:
         assert callback_data['lap_data'] is not None
         assert len(callback_data['lap_data']) > 0
 
-    def test_clears_buffer_after_lap_completion(self):
+    @patch('src.telemetry_loop.get_telemetry_reader')
+    def test_clears_buffer_after_lap_completion(self, mock_get_reader):
         """Should clear buffer after lap completes"""
+        # Mock the telemetry reader to always use MockTelemetryReader
+        from src.telemetry.telemetry_mock import MockTelemetryReader
+        mock_get_reader.return_value = MockTelemetryReader()
+
         loop = TelemetryLoop({'target_process': 'python'})
         loop.start()
 

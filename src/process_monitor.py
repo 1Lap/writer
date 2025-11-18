@@ -32,15 +32,31 @@ class ProcessMonitor:
         Returns:
             True if process found, False otherwise
         """
-        for proc in psutil.process_iter(['name']):
-            try:
-                proc_name = proc.info['name']
-                if proc_name and self.target_process.lower() in proc_name.lower():
-                    self._process = proc
-                    return True
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                # Process disappeared or we don't have permission to access it
-                continue
+        try:
+            for proc in psutil.process_iter(['name']):
+                try:
+                    proc_name = proc.info['name']
+                    if proc_name and self.target_process.lower() in proc_name.lower():
+                        self._process = proc
+                        return True
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    # Process disappeared or we don't have permission to access it
+                    continue
+        except (psutil.Error, PermissionError):
+            return self._matches_current_process()
+
+        return False
+
+    def _matches_current_process(self) -> bool:
+        """Fallback when process iteration is not permitted."""
+        try:
+            current = psutil.Process()
+            proc_name = current.name()
+            if proc_name and self.target_process.lower() in proc_name.lower():
+                self._process = current
+                return True
+        except (psutil.Error, PermissionError):
+            pass
         return False
 
     def wait_for_process(self, timeout: Optional[float] = None) -> bool:

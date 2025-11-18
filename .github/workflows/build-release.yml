@@ -1,0 +1,90 @@
+name: Build Release Executable
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        pip install -r requirements-windows.txt
+
+    - name: Run tests
+      run: |
+        pytest -v
+
+    - name: Build executable with PyInstaller
+      run: |
+        pyinstaller --onefile `
+          --name "LMU_Telemetry_Logger" `
+          --icon=NONE `
+          --add-data "src;src" `
+          --hidden-import psutil `
+          --hidden-import datetime `
+          --collect-all src `
+          example_app.py
+
+    - name: Create release package
+      run: |
+        mkdir release
+        copy dist\LMU_Telemetry_Logger.exe release\
+        copy README.md release\
+        copy USER_GUIDE.md release\
+        copy BUGS.md release\
+        echo "LMU Telemetry Logger v%GITHUB_REF_NAME%" > release\VERSION.txt
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: LMU_Telemetry_Logger-windows
+        path: release/
+
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          dist/LMU_Telemetry_Logger.exe
+          README.md
+          USER_GUIDE.md
+        body: |
+          ## LMU Telemetry Logger ${{ github.ref_name }}
+
+          ### Features
+          - Automatic telemetry capture from Le Mans Ultimate
+          - MVP format output (12-channel LMUTelemetry v2)
+          - ~43 Hz capture rate
+          - File size: ~1 MB per lap
+
+          ### Installation
+          1. Download `LMU_Telemetry_Logger.exe`
+          2. Run the executable (no installation required)
+          3. Launch LMU and start driving
+          4. CSV files saved to `./telemetry_output/`
+
+          ### Requirements
+          - Windows 10/11
+          - Le Mans Ultimate installed
+
+          ### Notes
+          - See USER_GUIDE.md for detailed instructions
+          - See BUGS.md for known issues
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

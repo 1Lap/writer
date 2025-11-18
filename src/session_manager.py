@@ -4,6 +4,8 @@ from enum import Enum
 from datetime import datetime
 from typing import Dict, Any, List
 
+from src.mvp_format import SampleNormalizer
+
 
 class SessionState(Enum):
     """Session states"""
@@ -25,11 +27,12 @@ class SessionManager:
     - Generate session IDs
     """
 
-    def __init__(self):
+    def __init__(self, normalizer: SampleNormalizer | None = None):
         self.state = SessionState.IDLE
         self.current_lap = 0
         self.current_session_id = None
-        self.lap_samples = []  # Buffer for current lap
+        self.lap_samples = []  # Buffer for current lap (normalized samples)
+        self.normalizer = normalizer or SampleNormalizer()
 
     def update(self, telemetry: Dict[str, Any]) -> Dict[str, bool]:
         """
@@ -59,7 +62,8 @@ class SessionManager:
         Args:
             telemetry: Telemetry data to buffer
         """
-        self.lap_samples.append(telemetry.copy())
+        normalized = self.normalizer.normalize(telemetry)
+        self.lap_samples.append(normalized)
 
     def get_lap_data(self) -> List[Dict[str, Any]]:
         """
@@ -94,14 +98,11 @@ class SessionManager:
         if not self.lap_samples:
             return {}
 
-        first_sample = self.lap_samples[0]
         last_sample = self.lap_samples[-1]
 
         return {
             'lap': self.current_lap,
-            'lap_time': last_sample.get('lap_time', 0.0),
-            'sector1_time': last_sample.get('sector1_time', 0.0),
-            'sector2_time': last_sample.get('sector2_time', 0.0),
-            'sector3_time': last_sample.get('sector3_time', 0.0),
+            'lap_time': last_sample.get('LapTime [s]', 0.0),
             'samples_count': len(self.lap_samples),
+            'lap_distance': last_sample.get('LapDistance [m]', 0.0),
         }

@@ -22,6 +22,7 @@ import sys
 from src.telemetry_loop import TelemetryLoop
 from src.csv_formatter import CSVFormatter
 from src.file_manager import FileManager
+from src.mvp_format import build_metadata_block
 from src.telemetry.telemetry_interface import get_telemetry_reader
 
 
@@ -76,11 +77,12 @@ class TelemetryApp:
         session_info = self.telemetry_reader.get_session_info()
         session_info['session_id'] = self.telemetry_loop.session_manager.current_session_id
 
+        metadata = build_metadata_block(session_info, lap_data)
+
         # Format as CSV
         csv_content = self.csv_formatter.format_lap(
             lap_data=lap_data,
-            lap_summary=lap_summary,
-            session_info=session_info
+            metadata=metadata,
         )
 
         # Save to file
@@ -114,6 +116,7 @@ class TelemetryApp:
         print(f"Target process: {self.config['target_process']}")
         print(f"Output directory: {self.config['output_dir']}")
         print(f"Poll rate: ~{1.0 / self.config['poll_interval']:.0f}Hz")
+        print("CSV format: MVP 12-channel LMUTelemetry v2")
         print()
         print("Waiting for target process...")
         print("(Press Ctrl+C to stop)")

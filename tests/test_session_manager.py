@@ -45,9 +45,9 @@ class TestSessionManager:
         """Should buffer telemetry samples correctly"""
         manager = SessionManager()
 
-        sample1 = {'lap': 1, 'speed': 200.0}
-        sample2 = {'lap': 1, 'speed': 210.0}
-        sample3 = {'lap': 1, 'speed': 220.0}
+        sample1 = {'lap': 1, 'lap_distance': 100.0, 'lap_time': 1.0}
+        sample2 = {'lap': 1, 'lap_distance': 150.0, 'lap_time': 1.5}
+        sample3 = {'lap': 1, 'lap_distance': 200.0, 'lap_time': 2.0}
 
         manager.add_sample(sample1)
         manager.add_sample(sample2)
@@ -55,15 +55,15 @@ class TestSessionManager:
 
         lap_data = manager.get_lap_data()
         assert len(lap_data) == 3
-        assert lap_data[0]['speed'] == 200.0
-        assert lap_data[2]['speed'] == 220.0
+        assert lap_data[0]['LapDistance [m]'] == pytest.approx(100.0)
+        assert lap_data[2]['LapDistance [m]'] == pytest.approx(200.0)
 
     def test_clear_lap_buffer(self):
         """Should clear buffer correctly"""
         manager = SessionManager()
 
-        manager.add_sample({'lap': 1, 'speed': 200.0})
-        manager.add_sample({'lap': 1, 'speed': 210.0})
+        manager.add_sample({'lap': 1, 'lap_distance': 50.0, 'lap_time': 0.5})
+        manager.add_sample({'lap': 1, 'lap_distance': 90.0, 'lap_time': 0.9})
 
         assert len(manager.get_lap_data()) == 2
 
@@ -87,7 +87,21 @@ class TestSessionManager:
         """Should track current lap number"""
         manager = SessionManager()
 
-        telemetry = {'lap': 5, 'speed': 200.0}
+        telemetry = {'lap': 5, 'lap_distance': 10.0}
         manager.update(telemetry)
 
         assert manager.current_lap == 5
+
+    def test_lap_summary_uses_normalized_values(self):
+        manager = SessionManager()
+
+        manager.current_lap = 3
+        manager.add_sample({'lap': 3, 'lap_distance': 10.0, 'lap_time': 1.0})
+        manager.add_sample({'lap': 3, 'lap_distance': 300.0, 'lap_time': 75.4321})
+
+        summary = manager.get_lap_summary()
+
+        assert summary['lap'] == 3
+        assert summary['lap_time'] == pytest.approx(75.4321)
+        assert summary['lap_distance'] == pytest.approx(300.0)
+        assert summary['samples_count'] == 2

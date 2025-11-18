@@ -13,7 +13,7 @@ A background telemetry logger for Le Mans Ultimate that automatically captures a
 - ✅ Process monitoring with auto-detection
 - ✅ Session management and lap tracking
 - ✅ Telemetry polling loop (~100Hz)
-- ✅ CSV formatter matching reference format
+- ✅ CSV formatter for LMUTelemetry v2 (12-channel MVP schema)
 - ✅ File management for saving lap data
 - ✅ 61/61 unit tests passing
 
@@ -25,7 +25,7 @@ A background telemetry logger for Le Mans Ultimate that automatically captures a
 - 🎯 **Zero-Config** - Single `.exe` file, no installation required
 - 🔄 **Auto-Detection** - Automatically starts/stops with LMU
 - 🖥️ **Background Service** - Runs silently in system tray
-- 📊 **CSV Export** - Matches standard telemetry format
+- 📊 **CSV Export** - Emits LMUTelemetry v2 (metadata + 12 channels)
 - 🍎 **Cross-Platform Dev** - Develop on macOS, deploy on Windows
 
 ## Development Setup (macOS)
@@ -71,7 +71,7 @@ telemetry_writer/
 │   ├── test_csv_formatter.py        # 13 tests ✅
 │   └── test_file_manager.py         # 16 tests ✅
 ├── requirements.txt
-└── example.csv                       # Reference output format
+└── example.csv                       # MVP 12-channel reference output
 ```
 
 ## Documentation

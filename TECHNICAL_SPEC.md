@@ -160,60 +160,53 @@ class SessionManager:
 
 ### 3. CSV Formatter
 
+The formatter writes the MVP LMUTelemetry v2 format (metadata preamble + 12 telemetry columns). Internally it expects:
+
+- **Normalized samples** keyed by the canonical headers defined in `src/mvp_format.py`.
+- **Metadata block** already containing the required keys (`Format`, `Version`, `Player`, `TrackName`, `CarName`, `SessionUTC`, `LapTime [s]`, `TrackLen [m]`) plus any optional extras (tyre compound, weather, etc.).
+
 ```python
 class CSVFormatter:
-    """Formats telemetry data to CSV matching example.csv structure"""
+    """Formats normalized telemetry data into LMUTelemetry v2 CSV."""
 
-    def format_lap(self,
-                   player_info: Dict[str, Any],
-                   lap_summary: Dict[str, Any],
-                   session_info: Dict[str, Any],
-                   car_setup: Dict[str, Any],
-                   telemetry_samples: List[Dict[str, Any]]) -> str:
-        """
-        Format complete lap data to CSV string
+    def __init__(self, header: Iterable[str] | None = None):
+        self.header = list(header or MVP_TELEMETRY_HEADER)
 
-        Args:
-            player_info: Player name, version, timestamp
-            lap_summary: Lap times, sector times
-            session_info: Track, weather, event type
-            car_setup: Wing settings, suspension, tyres
-            telemetry_samples: List of telemetry data points
+    def format_lap(
+        self,
+        lap_data: List[Mapping[str, Any]],
+        metadata: Mapping[str, Any],
+    ) -> str:
+        if not lap_data:
+            return ""
 
-        Returns:
-            CSV-formatted string matching example.csv
-        """
         lines = []
 
-        # Line 1: Player metadata
-        lines.append(self._format_player_metadata(player_info))
+        # Metadata rows are emitted first, in canonical order.
+        for key in self.metadata_order:
+            if key in metadata:
+                lines.append(f"{key},{metadata[key]}")
+        for key, value in metadata.items():
+            if key not in self.metadata_order:
+                lines.append(f"{key},{value}")
 
-        # Lines 2-3: Lap summary
-        lines.append(self._format_lap_summary_header())
-        lines.append(self._format_lap_summary_data(lap_summary))
+        lines.append("")  # Blank separator line
+        lines.append(",".join(self.header))
 
-        # Lines 4-5: Session metadata
-        lines.append(self._format_session_header())
-        lines.append(self._format_session_data(session_info))
+        # Telemetry samples sorted by LapDistance [m]
+        for sample in sorted(lap_data, key=lambda row: row.get("LapDistance [m]", 0.0)):
+            lines.append(self._format_sample_row(sample))
 
-        # Lines 6-7: Car setup
-        lines.append(self._format_setup_header())
-        lines.append(self._format_setup_data(car_setup))
+        return "\n".join(lines) + "\n"
 
-        # Line 8: Telemetry header
-        lines.append(self._format_telemetry_header())
-
-        # Lines 9+: Telemetry samples
-        for sample in telemetry_samples:
-            lines.append(self._format_telemetry_sample(sample))
-
-        return '\n'.join(lines) + '\n'
-
-    def _format_player_metadata(self, info: Dict[str, Any]) -> str:
-        """Format: player,v8,Dean Davids,0,2025111417168338"""
-        return f"player,v8,{info['name']},0,{info['timestamp']}"
-
-    # ... other formatting methods
+    def _format_sample_row(self, sample: Mapping[str, Any]) -> str:
+        """Format a single sample according to per-column precision rules."""
+        values = []
+        for column in self.header:
+            # ints => whole numbers, LapDistance/LapTime => ≥3 decimals,
+            # other floats => ≥2 decimals, blanks for missing coordinates.
+            values.append(self._format_value(column, sample.get(column)))
+        return ",".join(values)
 ```
 
 ---
@@ -501,24 +494,43 @@ All telemetry readers must return a dictionary with these fields:
 
 ### CSV File Format
 
-Must exactly match `example.csv`:
+The MVP logger emits the `LMUTelemetry v2` layout described in `telemetry_format_analysis.md`:
 
-```
-Line 1:  player,v8,{PlayerName},0,{Timestamp}
-Line 2:  Game,version,date,track,car,event,laptime [s],S1 [s],S2 [s],S3 [s],S4+ [s]
-Line 3:  LMU,{version},{date},{track},{car},{event},{laptime},{s1},{s2},{s3},{s4}
-Line 4:  TrackID,Tracklen,EventID,EventID2,Weather,TeamID,Tyre,Valid,Pitlap,Online,Lap,LapsInRace,Fuel at Start,MaxGears,MaxRevs,IdleRevs,TrackTemp,AmbientTemp,Windspeed,WindDirection
-Line 5:  {trackid},{tracklen},...
-Line 6:  FWing,RWing,OnThrottle,OffThrottle,FrontCamber,...
-Line 7:  {fwing},{rwing},...
-Line 8:  LapDistance,TotalDistance,LapTime,Sector1Time,Sector2Time,Speed,EngineRevs,...
-Line 9+: {lap_distance},{total_distance},{lap_time},...
-```
+1. **Metadata preamble** – Repeated `Key,Value` lines. The required keys are:
+   - `Format` (literal `LMUTelemetry v2`)
+   - `Version` (`1`)
+   - `Player`
+   - `TrackName`
+   - `CarName`
+   - `SessionUTC` (ISO `YYYY-MM-DDTHH:MM:SSZ`)
+   - `LapTime [s]` (best lap time, ≥3 decimals)
+   - `TrackLen [m]` (official lap length, ≥2 decimals)
 
-**Field Formatting Rules:**
-- Floats: Up to 8 decimal places (e.g., `256.24097`)
-- Booleans: `true` / `false` (lowercase)
-- Dates: `YYYY-MM-DD HH:MM:SS` (e.g., `2025-11-14 07:20:40`)
+   Optional keys (GameVersion, Event, TyreCompound, Weather, FuelAtStart, etc.) follow in the same `Key,Value` form.
+
+2. **Blank separator line.**
+
+3. **Telemetry header** – exactly:
+
+   ```
+   LapDistance [m],LapTime [s],Sector [int],Speed [km/h],EngineRevs [rpm],
+   ThrottlePercentage [%],BrakePercentage [%],Steer [%],Gear [int],
+   X [m],Y [m],Z [m]
+   ```
+
+4. **Telemetry samples** – one row per normalized sample sorted by `LapDistance [m]`.
+
+**Per-column formatting rules**
+
+| Column | Rule |
+| --- | --- |
+| `LapDistance [m]`, `LapTime [s]` | Floats with ≥3 decimals (e.g., `5386.800`). |
+| `Speed [km/h]`, `EngineRevs [rpm]`, position axes | Floats with ≥2 decimals (trim trailing zeros beyond the minimum). |
+| `ThrottlePercentage [%]`, `BrakePercentage [%]`, `Steer [%]` | Floats 0–100 (steer ±100) with ≥2 decimals. |
+| `Sector [int]`, `Gear [int]` | Integers (`Sector` zero-based, `Gear` -1/0/1+). |
+| Missing coordinates | Emit empty strings so the viewer reads them as `null`. |
+
+Every CSV file represents a single completed lap.
 
 ---
 
@@ -663,7 +675,7 @@ class ProcessError(TelemetryLoggerError):
 
 | Session Type | Laps | Validation |
 |--------------|------|------------|
-| Practice | 1 | CSV matches example.csv structure |
+| Practice | 1 | CSV matches LMUTelemetry v2 structure |
 | Practice | 3 | All 3 laps written correctly |
 | Race | 5 | Lap numbers sequential, no gaps |
 | Interrupted | Stop mid-lap | Partial lap saved or discarded correctly |
@@ -704,7 +716,7 @@ class ProcessError(TelemetryLoggerError):
 
 **Done When:**
 - ✅ All 6 CSV sections format correctly
-- ✅ Output matches example.csv format exactly (line by line comparison)
+- ✅ Output matches LMUTelemetry v2 format exactly
 - ✅ Field precision matches (floating point formatting)
 - ✅ Unit tests for each section pass
 - ✅ Integration test: full lap data → CSV string → parse and validate
@@ -730,7 +742,7 @@ class ProcessError(TelemetryLoggerError):
 - ✅ `RealTelemetryReader` reads from shared memory
 - ✅ Plugin enabled in LMU confirmed
 - ✅ Live test: 1 practice lap → CSV file created
-- ✅ CSV output validated against example.csv
+- ✅ CSV output validated against LMUTelemetry v2 reference
 - ✅ Live test: 3 laps → 3 files created
 - ✅ Performance validated (< 5% CPU, < 100MB RAM)
 - ✅ Auto-detection works (start logger, then LMU)
@@ -786,7 +798,7 @@ class ProcessError(TelemetryLoggerError):
 
 ### Telemetry Dict → CSV Columns
 
-Mapping documented in `CSVFormatter` implementation with exact column order from example.csv.
+Mapping documented in `CSVFormatter` implementation with the exact MVP header order.
 
 ---
 

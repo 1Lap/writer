@@ -83,7 +83,7 @@ class TestMockTelemetryReader:
             'lap', 'lap_distance', 'speed', 'rpm', 'gear',
             'position_x', 'position_y', 'position_z',
             'wheel_speed', 'tyre_temp', 'tyre_pressure',
-            'engine_temp', 'fuel_remaining'
+            'engine_temp', 'fuel_remaining', 'sector_index'
         ]
 
         for field in required_fields:

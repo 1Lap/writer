@@ -99,7 +99,7 @@ python example_app.py
 
 4. **Verify CSV output:**
    - Check `telemetry_output/` directory
-   - Compare output CSV with `example.csv`
+   - Compare output CSV with the LMUTelemetry v2 reference (`example.csv` updated MVP sample)
    - Verify all 6 sections present
    - Check field values make sense
 
@@ -125,7 +125,7 @@ If adding new functionality:
 - Check virtual environment is activated
 
 **CSV format mismatches:**
-- Compare field-by-field with `example.csv`
+- Compare field-by-field with the MVP reference CSV
 - Check CSVFormatter section order
 - Verify all wheel data is in correct order (rl, rr, fl, fr)
 
@@ -162,7 +162,7 @@ git push
 - [ ] Reads live data from LMU shared memory
 - [ ] `example_app.py` works with LMU running
 - [ ] CSV files generated in `telemetry_output/`
-- [ ] CSV format matches `example.csv`
+- [ ] CSV format matches LMUTelemetry v2 schema
 - [ ] All 61 tests still passing
 - [ ] Can complete a lap and get saved CSV
 
@@ -171,7 +171,7 @@ git push
 1. Check `.claude/CLAUDE.md` for full project context
 2. Check `TECHNICAL_SPEC.md` for component details
 3. Look at `telemetry_mock.py` for expected data structure
-4. Compare with `example.csv` for CSV format
+4. Compare with the MVP reference CSV for format compliance
 5. Ask Claude for guidance - reference the CLAUDE.md file
 
 ---

@@ -38,3 +38,11 @@ telemetry_output/
 build/
 dist/
 *.egg-info/
+*.spec
+LMU_Telemetry_Logger_v*/
+
+# Local settings
+.claude/settings.local.json
+
+# External libraries (vendored)
+pyRfactor2SharedMemory/
