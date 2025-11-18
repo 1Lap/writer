@@ -24,11 +24,14 @@ class FileManager:
         Args:
             config: Configuration dictionary with optional keys:
                 - output_dir: Base directory for output files (default: "./telemetry_output")
-                - filename_format: Format string for filenames (default: "{session_id}_lap{lap}.csv")
+                - filename_format: Format string for filenames (default: "{date}_{time}_{track}_{car}_{driver}_lap{lap}_t{lap_time}s_{session_id}.csv")
         """
         self.config = config or {}
         self.output_dir = Path(self.config.get('output_dir', './telemetry_output'))
-        self.filename_format = self.config.get('filename_format', '{session_id}_lap{lap}.csv')
+        self.filename_format = self.config.get(
+            'filename_format',
+            '{date}_{time}_{track}_{car}_{driver}_lap{lap}_t{lap_time}s_{session_id}.csv'
+        )
 
         # Create output directory if it doesn't exist
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -77,16 +80,31 @@ class FileManager:
         lap = lap_summary.get('lap', 0)
         session_id = session_info.get('session_id', self._generate_fallback_session_id())
 
-        # Additional fields that might be useful in filename
-        car = session_info.get('car_name', '')
-        track = session_info.get('track_name', '')
+        car = session_info.get('car_name') or 'unknown-car'
+        track = session_info.get('track_name') or 'unknown-track'
+        driver = (
+            session_info.get('player_name')
+            or session_info.get('driver_name')
+            or session_info.get('driver')
+            or 'unknown-driver'
+        )
+
+        timestamp = self._resolve_timestamp(session_info.get('date'))
+        date_str = timestamp.strftime('%Y-%m-%d')
+        time_str = timestamp.strftime('%H-%M')
+
+        lap_time_seconds = self._format_lap_time(lap_summary.get('lap_time'))
 
         # Format filename using format string
         filename = self.filename_format.format(
             session_id=session_id,
             lap=lap,
             car=car,
-            track=track
+            track=track,
+            driver=driver,
+            date=date_str,
+            time=time_str,
+            lap_time=lap_time_seconds
         )
 
         # Sanitize filename (remove invalid characters)
@@ -117,6 +135,28 @@ class FileManager:
     def _generate_fallback_session_id(self) -> str:
         """Generate a fallback session ID if none provided"""
         return datetime.now().strftime("%Y%m%d%H%M%S")
+
+    def _resolve_timestamp(self, value: Optional[Any]) -> datetime:
+        """Resolve a timestamp from session info for filename formatting."""
+        if isinstance(value, datetime):
+            return value
+
+        if value:
+            try:
+                return datetime.fromisoformat(str(value))
+            except ValueError:
+                pass
+
+        return datetime.now()
+
+    def _format_lap_time(self, lap_time: Optional[Any]) -> int:
+        """Format lap time value as whole seconds for filenames."""
+        try:
+            seconds = float(lap_time)
+        except (TypeError, ValueError):
+            return 0
+
+        return int(round(seconds))
 
     def get_output_directory(self) -> Path:
         """Get the output directory path"""

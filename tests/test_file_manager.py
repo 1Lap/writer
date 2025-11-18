@@ -3,8 +3,25 @@
 import pytest
 import tempfile
 import shutil
+from datetime import datetime
 from pathlib import Path
 from src.file_manager import FileManager
+
+
+TEST_TIMESTAMP = datetime(2025, 11, 18, 13, 52, 51)
+
+
+def build_session_info(**overrides):
+    base = {
+        'session_id': '12345',
+        'track_name': 'Algarve International Circuit',
+        'car_name': 'BMW M4 GT3 Evo',
+        'player_name': 'David Dean',
+        'date': TEST_TIMESTAMP,
+    }
+
+    base.update(overrides)
+    return base
 
 
 class TestFileManager:
@@ -38,7 +55,7 @@ class TestFileManager:
 
         csv_content = "player,v8,Test,0,12345\nheader\ndata"
         lap_summary = {'lap': 1}
-        session_info = {'session_id': '12345'}
+        session_info = build_session_info()
 
         filepath = manager.save_lap(csv_content, lap_summary, session_info)
 
@@ -51,7 +68,7 @@ class TestFileManager:
 
         csv_content = "test,data,here\n1,2,3"
         lap_summary = {'lap': 1}
-        session_info = {'session_id': '12345'}
+        session_info = build_session_info()
 
         filepath = manager.save_lap(csv_content, lap_summary, session_info)
 
@@ -64,15 +81,21 @@ class TestFileManager:
         """Should generate filename with session ID and lap number"""
         manager = FileManager({'output_dir': str(temp_dir)})
 
-        lap_summary = {'lap': 5}
-        session_info = {'session_id': '2025111812345'}
+        lap_summary = {'lap': 5, 'lap_time': 140.2}
+        session_info = build_session_info(session_id='2025111812345')
 
         csv_content = "test"
         filepath = manager.save_lap(csv_content, lap_summary, session_info)
 
         filename = Path(filepath).name
-        assert '2025111812345' in filename
+        assert '2025-11-18' in filename
+        assert '13-52' in filename
+        assert 'Algarve_International_Circuit' in filename
+        assert 'BMW_M4_GT3_Evo' in filename
+        assert 'David_Dean' in filename
         assert 'lap5' in filename
+        assert 't140s' in filename
+        assert '2025111812345' in filename
         assert filename.endswith('.csv')
 
     def test_custom_filename_format(self, temp_dir):
@@ -84,11 +107,7 @@ class TestFileManager:
         })
 
         lap_summary = {'lap': 3}
-        session_info = {
-            'track_name': 'Bahrain',
-            'car_name': 'Toyota',
-            'session_id': '12345'
-        }
+        session_info = build_session_info(track_name='Bahrain', car_name='Toyota')
 
         csv_content = "test"
         filepath = manager.save_lap(csv_content, lap_summary, session_info)
@@ -103,11 +122,10 @@ class TestFileManager:
         manager = FileManager({'output_dir': str(temp_dir)})
 
         lap_summary = {'lap': 1}
-        session_info = {
-            'session_id': '12345',
-            'car_name': 'Car<>:"/\\|?*Name',
-            'track_name': 'Track With Spaces'
-        }
+        session_info = build_session_info(
+            car_name='Car<>:"/\\|?*Name',
+            track_name='Track With Spaces'
+        )
 
         csv_content = "test"
         filepath = manager.save_lap(csv_content, lap_summary, session_info)
@@ -130,7 +148,7 @@ class TestFileManager:
         # Save 3 laps
         for i in range(1, 4):
             lap_summary = {'lap': i}
-            session_info = {'session_id': '12345'}
+            session_info = build_session_info()
             manager.save_lap("test", lap_summary, session_info)
 
         laps = manager.list_saved_laps()
@@ -149,7 +167,7 @@ class TestFileManager:
 
         # Save a lap
         lap_summary = {'lap': 1}
-        session_info = {'session_id': '12345'}
+        session_info = build_session_info()
         filepath = manager.save_lap("test", lap_summary, session_info)
         filename = Path(filepath).name
 
@@ -175,7 +193,7 @@ class TestFileManager:
         # Save 5 laps
         for i in range(1, 6):
             lap_summary = {'lap': i}
-            session_info = {'session_id': '12345'}
+            session_info = build_session_info()
             manager.save_lap("test", lap_summary, session_info)
 
         # Verify they exist
@@ -192,10 +210,10 @@ class TestFileManager:
 
         # Save laps from two different sessions
         for i in range(1, 4):
-            manager.save_lap("test", {'lap': i}, {'session_id': 'session1'})
+            manager.save_lap("test", {'lap': i}, build_session_info(session_id='session1'))
 
         for i in range(1, 3):
-            manager.save_lap("test", {'lap': i}, {'session_id': 'session2'})
+            manager.save_lap("test", {'lap': i}, build_session_info(session_id='session2'))
 
         # Get laps for session1
         session1_laps = manager.get_session_laps('session1')
@@ -231,7 +249,7 @@ class TestFileManager:
         manager = FileManager({'output_dir': str(temp_dir)})
 
         lap_summary = {'lap': 1}
-        session_info = {'session_id': '12345'}
+        session_info = build_session_info()
 
         # Save same lap twice
         filepath1 = manager.save_lap("content1", lap_summary, session_info)
