@@ -50,7 +50,8 @@ jobs:
         copy dist\LMU_Telemetry_Logger.exe release\
         copy README.md release\
         copy USER_GUIDE.md release\
-        copy BUGS.md release\
+        copy CHANGELOG.md release\
+        copy WINDOWS_BUILD_INSTRUCTIONS.md release\
         echo "LMU Telemetry Logger v%GITHUB_REF_NAME%" > release\VERSION.txt
 
     - name: Upload artifact
@@ -58,6 +59,25 @@ jobs:
       with:
         name: LMU_Telemetry_Logger-windows
         path: release/
+
+    - name: Get release notes
+      id: release_notes
+      if: startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      run: |
+        # Extract version from tag (e.g., v0.2.0 -> 0.2.0)
+        VERSION=${GITHUB_REF_NAME#v}
+
+        # Look for RELEASE_NOTES_v{version}.md
+        RELEASE_NOTES_FILE="RELEASE_NOTES_v${VERSION}.md"
+
+        if [ -f "$RELEASE_NOTES_FILE" ]; then
+          echo "Using $RELEASE_NOTES_FILE"
+          echo "body_file=$RELEASE_NOTES_FILE" >> $GITHUB_OUTPUT
+        else
+          echo "No release notes file found, using default"
+          echo "body_file=" >> $GITHUB_OUTPUT
+        fi
 
     - name: Create GitHub Release
       if: startsWith(github.ref, 'refs/tags/')
@@ -67,17 +87,22 @@ jobs:
           dist/LMU_Telemetry_Logger.exe
           README.md
           USER_GUIDE.md
+          CHANGELOG.md
+          WINDOWS_BUILD_INSTRUCTIONS.md
+        body_path: ${{ steps.release_notes.outputs.body_file }}
         body: |
           ## LMU Telemetry Logger ${{ github.ref_name }}
 
           ### Features
-          - Automatic telemetry capture from Le Mans Ultimate
-          - MVP format output (12-channel LMUTelemetry v2)
-          - ~43 Hz capture rate
+          - Automatic telemetry capture from Le Mans Ultimate (player + opponents)
+          - Opponent lap tracking (fastest lap only)
+          - MVP format output (10-channel LMUTelemetry v3)
+          - ~43-50 Hz capture rate (optimal)
           - File size: ~1 MB per lap
+          - Smart file naming with track, car, driver, lap time
 
           ### Installation
-          1. Install https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin 
+          1. Install https://github.com/TheIronWolfModding/rF2SharedMemoryMapPlugin
             - This is included by "Simhub" and other popular tools, you may have it already
           2. Download `LMU_Telemetry_Logger.exe`
           3. Run the executable (no installation required)
@@ -88,8 +113,9 @@ jobs:
           - Windows 10/11
           - Le Mans Ultimate installed
 
-          ### Notes
+          ### Documentation
           - See USER_GUIDE.md for detailed instructions
-          - See BUGS.md for known issues
+          - See CHANGELOG.md for full changelog
+          - See WINDOWS_BUILD_INSTRUCTIONS.md to build from source
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
