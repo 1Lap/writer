@@ -14,10 +14,7 @@ Event	Practice
 
 Issues:
 
-1) Track Name, doesn't include variant / layout ?
-2) CarName, that's the team name or something? I would like to store the car/variant/model instead, we can store Team Name but I don't think it's important
-3) TrackLen is 0?
-4) No sectors? If they are a "track level" datum, we should store them.
+1) No sectors? If they are a "track level" datum, we should store them.
 
 I also notice in the "data" section we have this (I manually / randomly selected lines):
 
@@ -30,12 +27,7 @@ LapDistance [m]	LapTime [s]	Sector [int]	Speed [km/h]	EngineRevs [rpm]	ThrottleP
 
 Issues:
 
-5) So we store the laptime on every tick? We don't need to do that.
-6) Sector is empty? Why store sector every tick?
-7) we store elevation? I don't think we need it?
-
-
-
-
-
+2) So we store the laptime on every tick? We don't need to do that.
+3) Sector is empty? Why store sector every tick unless we are going to use it?
+4) we store elevation? I don't think we need it?
 
