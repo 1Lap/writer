@@ -94,3 +94,28 @@ class TestCSVFormatter:
         second_sample = lines[-1]
         assert first_sample.startswith("1.000")
         assert second_sample.startswith("12.346")
+
+    def test_sector_boundaries_in_metadata(self, formatter, sample_row):
+        """Test that sector boundaries appear in CSV metadata"""
+        metadata = OrderedDict([
+            ("Format", "LMUTelemetry v2"),
+            ("Version", "1"),
+            ("Player", "Test Driver"),
+            ("TrackName", "Test Track"),
+            ("CarName", "Test Car"),
+            ("SessionUTC", "2025-01-01T00:00:00Z"),
+            ("LapTime [s]", "95.123"),
+            ("TrackLen [m]", "5400.00"),
+            ("NumSectors", "3"),
+            ("Sector1End [m]", "1800.00"),
+            ("Sector2End [m]", "3600.00"),
+            ("Sector3End [m]", "5400.00"),
+        ])
+
+        result = formatter.format_lap([sample_row], metadata)
+        lines = result.strip().split("\n")
+
+        assert "NumSectors,3" in lines
+        assert "Sector1End [m],1800.00" in lines
+        assert "Sector2End [m],3600.00" in lines
+        assert "Sector3End [m],5400.00" in lines

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Mapping, MutableMapping
+from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Tuple
 
 
 # Canonical telemetry header for the trimmed MVP export
@@ -146,6 +146,7 @@ class SampleNormalizer:
         return 0.0
 
     def _resolve_sector(self, telemetry: Mapping[str, Any], lap_distance: float) -> int:
+        # Check for explicit sector index in telemetry
         for key in ("Sector [int]", "sector", "sector_index", "current_sector"):
             if key in telemetry and telemetry[key] is not None:
                 try:
@@ -156,6 +157,16 @@ class SampleNormalizer:
                     sector -= 1
                 return max(0, sector)
 
+        # Use sector boundaries if available
+        sector_boundaries = telemetry.get("sector_boundaries")
+        if sector_boundaries and isinstance(sector_boundaries, (list, tuple)):
+            for i, boundary in enumerate(sector_boundaries):
+                if lap_distance < boundary:
+                    return i
+            # If beyond all boundaries, return last sector
+            return len(sector_boundaries) - 1
+
+        # Fall back to equal division based on track length
         track_length = self._to_float(
             telemetry.get("TrackLen [m]"), telemetry.get("track_length"), default=0.0
         )
@@ -206,6 +217,13 @@ def build_metadata_block(
         require_positive=True,
     )
     metadata["TrackLen [m]"] = _format_decimal(track_length, 2)
+
+    # Add sector boundary information
+    sector_boundaries = session_info.get("sector_boundaries")
+    if sector_boundaries and isinstance(sector_boundaries, (list, tuple)) and len(sector_boundaries) > 0:
+        metadata["NumSectors"] = str(len(sector_boundaries))
+        for i, boundary in enumerate(sector_boundaries, start=1):
+            metadata[f"Sector{i}End [m]"] = _format_decimal(float(boundary), 2)
 
     sector_times = _resolve_sector_times(session_info, lap_samples, metadata["LapTime [s]"])
     for index, sector_time in enumerate(sector_times, start=1):
@@ -364,6 +382,67 @@ def _format_decimal(value: float, min_decimals: int) -> str:
         formatted += "0" * (min_decimals - decimals)
 
     return formatted
+
+
+def detect_sector_boundaries(
+    telemetry_samples: Iterable[Mapping[str, Any]],
+    track_length: float,
+) -> Tuple[List[float], int]:
+    """
+    Detect sector boundaries from telemetry samples.
+
+    Args:
+        telemetry_samples: Telemetry samples from a lap
+        track_length: Total track length in meters
+
+    Returns:
+        Tuple of (boundaries, num_sectors) where boundaries is a list of lap distances
+        where each sector ends, and num_sectors is the total number of sectors.
+    """
+    # Sort samples by lap distance
+    sorted_samples = sorted(telemetry_samples, key=lambda s: s.get('lap_distance', 0.0))
+
+    # Track when sector times transition from 0 to positive
+    boundaries = []
+    prev_sector1 = 0.0
+    prev_sector2 = 0.0
+    prev_sector3 = 0.0
+
+    for sample in sorted_samples:
+        sector1_time = sample.get('sector1_time', 0.0) or 0.0
+        sector2_time = sample.get('sector2_time', 0.0) or 0.0
+        sector3_time = sample.get('sector3_time', 0.0) or 0.0
+        lap_distance = sample.get('lap_distance', 0.0) or 0.0
+
+        # Detect sector 1 completion (transition from 0 to positive)
+        if prev_sector1 == 0.0 and sector1_time > 0.0:
+            boundaries.append(lap_distance)
+
+        # Detect sector 2 completion
+        elif prev_sector2 == 0.0 and sector2_time > 0.0:
+            boundaries.append(lap_distance)
+
+        # Detect sector 3 completion
+        elif prev_sector3 == 0.0 and sector3_time > 0.0:
+            boundaries.append(lap_distance)
+
+        prev_sector1 = sector1_time
+        prev_sector2 = sector2_time
+        prev_sector3 = sector3_time
+
+    # If no boundaries detected, fall back to equal division (3 sectors)
+    if not boundaries and track_length > 0:
+        boundaries = [track_length / 3, track_length * 2 / 3, track_length]
+        num_sectors = 3
+    else:
+        # Always include track_length as final boundary
+        if track_length > 0:
+            if not boundaries or boundaries[-1] < track_length * 0.95:
+                boundaries.append(track_length)
+        # Determine number of sectors
+        num_sectors = len(boundaries) if boundaries else 3
+
+    return boundaries, num_sectors
 
 
 def _first_float(*values: Any, default: float = 0.0, require_positive: bool = False) -> float:

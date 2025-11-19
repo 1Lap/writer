@@ -81,6 +81,18 @@ class RealTelemetryReader(TelemetryReaderInterface):
             lap_distance = scor.mLapDist  # Lap distance from scoring
             total_distance = scor.mLapDist  # Total distance same as lap distance
 
+            # Infer current sector from sector times
+            # sector1_time > 0 means we've completed sector 1 (now in sector 2)
+            # sector2_time > 0 means we've completed sector 2 (now in sector 3)
+            sector1_time = scor.mCurSector1
+            sector2_time = scor.mCurSector2
+            if sector2_time > 0.0:
+                current_sector = 2  # In sector 3 (0-indexed)
+            elif sector1_time > 0.0:
+                current_sector = 1  # In sector 2 (0-indexed)
+            else:
+                current_sector = 0  # In sector 1 (0-indexed)
+
             # Speed from local velocity magnitude, convert to km/h
             speed = (tele.mLocalVel.x**2 + tele.mLocalVel.y**2 + tele.mLocalVel.z**2)**0.5 * 3.6
 
@@ -99,9 +111,10 @@ class RealTelemetryReader(TelemetryReaderInterface):
                 'lap_distance': lap_distance,
                 'total_distance': total_distance,
                 'lap_time': scor.mCurrentET - scor.mLapStartET,  # Current lap time = current time - lap start time
-                'sector1_time': scor.mCurSector1,
-                'sector2_time': scor.mCurSector2,
+                'sector1_time': sector1_time,
+                'sector2_time': sector2_time,
                 'sector3_time': 0.0,  # Sector 3 calculated from lap - S1 - S2
+                'current_sector': current_sector,  # 0-indexed sector (0, 1, or 2)
 
                 # Track Info
                 'track_id': 0,  # TODO: Get from game

@@ -22,7 +22,7 @@ import sys
 from src.telemetry_loop import TelemetryLoop
 from src.csv_formatter import CSVFormatter
 from src.file_manager import FileManager
-from src.mvp_format import build_metadata_block
+from src.mvp_format import build_metadata_block, detect_sector_boundaries
 from src.telemetry.telemetry_interface import get_telemetry_reader
 
 
@@ -88,6 +88,14 @@ class TelemetryApp:
         # Get session info from telemetry reader
         session_info = self.telemetry_reader.get_session_info()
         session_info['session_id'] = self.telemetry_loop.session_manager.current_session_id
+
+        # Detect sector boundaries from lap data
+        track_length = session_info.get('track_length', 0.0)
+        if track_length > 0 and lap_data:
+            sector_boundaries, num_sectors = detect_sector_boundaries(lap_data, track_length)
+            session_info['sector_boundaries'] = sector_boundaries
+            session_info['num_sectors'] = num_sectors
+            print(f"    Sectors: {num_sectors} detected at {[f'{b:.0f}m' for b in sector_boundaries]}")
 
         metadata = build_metadata_block(session_info, lap_data)
 
