@@ -78,7 +78,8 @@ class SessionManager:
             telemetry: Telemetry data to buffer
         """
         normalized = self.normalizer.normalize(telemetry)
-        self.lap_samples.append(normalized)
+        if not self._is_duplicate_sample(normalized):
+            self.lap_samples.append(normalized)
 
     def get_lap_data(self) -> List[Dict[str, Any]]:
         """
@@ -179,3 +180,13 @@ class SessionManager:
                 except (TypeError, ValueError):
                     continue
         return None
+
+    def _is_duplicate_sample(self, normalized: Mapping[str, Any]) -> bool:
+        if not self.lap_samples:
+            return False
+
+        last = self.lap_samples[-1]
+        # Treat samples as duplicates only when the fully-normalized payload matches.
+        # This keeps truly identical records from being buffered while still allowing
+        # repeated distance/time readings that carry new sensor data to be logged.
+        return normalized == last
