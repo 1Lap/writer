@@ -144,13 +144,26 @@ Each vehicle includes:
 
 ## File Naming Proposal
 
+Uses the same format as player laps for consistency:
 ```
-{session_id}_lap{lap_num}_{driver_name}_P{position}.csv
+{date}_{time}_{track}_{car}_{driver}_lap{lap}_t{lap_time}s.csv
 
 Examples:
-- 20251120_143052_lap3_JohnDoe_P2.csv (opponent)
-- 20251120_143052_lap3_player.csv (player - current format)
+Player lap:
+- 2025-11-20_14-30_bahrain-international-circuit_toyota-gr010_dean-davids_lap3_t125.234s.csv
+
+Opponent lap:
+- 2025-11-20_14-30_bahrain-international-circuit_ferrari-499p_alice-johnson_lap3_t122.156s.csv
 ```
+
+Format fields:
+- `{date}`: Session date (YYYY-MM-DD)
+- `{time}`: Session time (HH-MM)
+- `{track}`: Track name (sanitized, lowercase, spaces→hyphens)
+- `{car}`: Car name (sanitized, lowercase, spaces→hyphens)
+- `{driver}`: Driver name (player or opponent, sanitized)
+- `{lap}`: Lap number
+- `{lap_time}`: Lap time in seconds (formatted)
 
 ## Storage Impact Estimation
 
@@ -230,9 +243,10 @@ Scenario: 30-minute race, 20 drivers, 10 laps average
 - Integration tested with MockTelemetryReader on macOS
 
 **File Naming**:
-- Player laps: `{session_id}_lap{lap}.csv`
-- Opponent laps: `{session_id}_lap{lap}_{driver_name}_P{position}.csv`
-- Example: `20251120_143052_lap3_Alice_Johnson_P2.csv`
+- Uses same format as player laps: `{date}_{time}_{track}_{car}_{driver}_lap{lap}_t{lap_time}s.csv`
+- Driver field contains opponent name for opponent laps
+- Example player: `2025-11-20_14-30_bahrain-international-circuit_toyota-gr010_dean-davids_lap3_t125.234s.csv`
+- Example opponent: `2025-11-20_14-30_bahrain-international-circuit_ferrari-499p_alice-johnson_lap3_t122.156s.csv`
 
 **Storage Impact**:
 - ~1MB per lap (same as player laps)

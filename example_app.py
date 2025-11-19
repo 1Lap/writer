@@ -163,24 +163,20 @@ class TelemetryApp:
             metadata=metadata,
         )
 
-        # Save to file with opponent's name in filename
+        # Save to file using same format as player laps
         try:
-            # Sanitize driver name for filename
-            safe_driver_name = opponent_lap_data.driver_name.replace(' ', '_').replace('/', '_')
-            position_str = f"_P{opponent_lap_data.position}" if opponent_lap_data.position else ""
-
-            # Custom filename: {session_id}_lap{lap}_{driver_name}_P{position}.csv
+            # Create lap summary with opponent data
             lap_summary = {
                 'lap': opponent_lap_data.lap_number,
+                'lap_time': opponent_lap_data.lap_time,
             }
 
-            # Use session_id if available, otherwise generate timestamp-based name
-            session_id = session_info.get('session_id', 'opponent')
-            filename = f"{session_id}_lap{opponent_lap_data.lap_number}_{safe_driver_name}{position_str}.csv"
-
-            filepath = self.file_manager.save(
-                content=csv_content,
-                filename=filename
+            # Use the standard save_lap method for consistent naming
+            # Format will be: {date}_{time}_{track}_{car}_{driver}_lap{lap}_t{lap_time}s.csv
+            filepath = self.file_manager.save_lap(
+                csv_content=csv_content,
+                lap_summary=lap_summary,
+                session_info=session_info
             )
 
             self.opponent_laps_saved += 1
