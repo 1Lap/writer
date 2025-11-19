@@ -17,7 +17,10 @@ class MockTelemetryReader(TelemetryReaderInterface):
 
     def __init__(self, config: Dict[str, Any] = None):
         self.config = config or {}
-        self.start_time = time.time()
+        # Use perf_counter for high-resolution timing so rapid successive
+        # calls (like unit tests) still see forward progress on platforms
+        # with coarse wall-clock resolution.
+        self.start_time = time.perf_counter()
         self.lap = 1
         self.lap_start_time = self.start_time
 
@@ -54,8 +57,9 @@ class MockTelemetryReader(TelemetryReaderInterface):
         - Lap completion triggers when lap distance resets
         - All fields required by the MVP CSV schema are populated
         """
-        elapsed = time.time() - self.lap_start_time
-        total_elapsed = time.time() - self.start_time
+        now = time.perf_counter()
+        elapsed = now - self.lap_start_time
+        total_elapsed = now - self.start_time
 
         # Simulate car progressing around track (~70m/s average speed)
         raw_distance = elapsed * 70
@@ -65,7 +69,7 @@ class MockTelemetryReader(TelemetryReaderInterface):
         # Check for lap completion (when we've completed a full lap)
         if raw_distance >= self.track_length and elapsed > 0.5:
             self.lap += 1
-            self.lap_start_time = time.time()
+            self.lap_start_time = time.perf_counter()
             elapsed = 0
             raw_distance = 0
             lap_distance = 0
