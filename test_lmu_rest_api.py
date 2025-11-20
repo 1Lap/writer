@@ -39,7 +39,7 @@ def test_endpoint(endpoint):
         response = requests.get(url, timeout=2)
 
         if response.status_code == 200:
-            print(f"✓ Status: {response.status_code} OK")
+            print(f"Status: {response.status_code} OK")
 
             # Try to parse as JSON
             try:
@@ -53,18 +53,18 @@ def test_endpoint(endpoint):
                 print(response.text[:1000])  # First 1000 chars
                 return response.text
         else:
-            print(f"✗ Status: {response.status_code}")
+            print(f"Status: {response.status_code}")
             print(f"Response: {response.text[:500]}")
             return None
 
     except requests.exceptions.ConnectionError:
-        print(f"✗ Connection failed - Is LMU running?")
+        print(f"Connection failed - Is LMU running?")
         return None
     except requests.exceptions.Timeout:
-        print(f"✗ Request timed out")
+        print(f"Request timed out")
         return None
     except Exception as e:
-        print(f"✗ Error: {e}")
+        print(f"Error: {e}")
         return None
 
 
@@ -147,9 +147,9 @@ def main():
     print("Testing connection to LMU REST API...")
     try:
         response = requests.get(f"{BASE_URL}/rest/sessions", timeout=2)
-        print(f"✓ Connected to LMU REST API (status: {response.status_code})")
+        print(f"Connected to LMU REST API (status: {response.status_code})")
     except requests.exceptions.ConnectionError:
-        print("✗ Cannot connect to LMU REST API at localhost:6397")
+        print("Cannot connect to LMU REST API at localhost:6397")
         print("  Make sure LMU is running!")
         sys.exit(1)
 
