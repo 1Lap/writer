@@ -53,13 +53,26 @@ jobs:
     - name: Install Inno Setup
       run: |
         choco install innosetup -y
-        refreshenv
 
     - name: Build installer with Inno Setup
       shell: pwsh
       run: |
+        # Find Inno Setup compiler
+        $isccPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+        if (!(Test-Path $isccPath)) {
+          Write-Error "Inno Setup compiler not found at: $isccPath"
+          exit 1
+        }
+
+        Write-Output "Found Inno Setup at: $isccPath"
+
         # Run Inno Setup compiler
-        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\LMU_Telemetry_Logger_Setup.iss
+        & $isccPath installer\LMU_Telemetry_Logger_Setup.iss
+
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "Inno Setup compilation failed with exit code: $LASTEXITCODE"
+          exit 1
+        }
 
         # Verify installer was created
         if (!(Test-Path "installer\output\LMU_Telemetry_Logger_Setup_v1.0.0.exe")) {
@@ -70,30 +83,32 @@ jobs:
         Write-Output "Installer created successfully!"
 
     - name: Create release package
-      shell: bash
+      shell: pwsh
       run: |
-        mkdir release
+        # Create release directory
+        New-Item -ItemType Directory -Force -Path release
+
         # Copy the installer (primary distribution method)
-        cp installer/output/LMU_Telemetry_Logger_Setup_v1.0.0.exe release/
+        Copy-Item "installer\output\LMU_Telemetry_Logger_Setup_v1.0.0.exe" "release\"
 
         # Create a zip of the standalone executable bundle for advanced users
-        cd dist
-        7z a -tzip ../release/LMU_Telemetry_Logger_Standalone.zip LMU_Telemetry_Logger/
-        cd ..
+        Compress-Archive -Path "dist\LMU_Telemetry_Logger\*" -DestinationPath "release\LMU_Telemetry_Logger_Standalone.zip" -Force
 
         # Copy documentation
-        cp README.md release/
-        cp USER_GUIDE.md release/
-        cp CHANGELOG.md release/
-        cp WINDOWS_BUILD_INSTRUCTIONS.md release/
+        Copy-Item "README.md" "release\"
+        Copy-Item "USER_GUIDE.md" "release\"
+        Copy-Item "CHANGELOG.md" "release\"
+        Copy-Item "WINDOWS_BUILD_INSTRUCTIONS.md" "release\"
 
         # Generate version info based on trigger type
-        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-          echo "LMU Telemetry Logger PR #${{ github.event.pull_request.number }} ($(git rev-parse --short HEAD))" > release/VERSION.txt
-          echo "Build from: ${{ github.head_ref }}" >> release/VERSION.txt
-        else
-          echo "LMU Telemetry Logger ${GITHUB_REF_NAME}" > release/VERSION.txt
-        fi
+        if ("${{ github.event_name }}" -eq "pull_request") {
+          $version = "LMU Telemetry Logger PR #${{ github.event.pull_request.number }} ($(git rev-parse --short HEAD))`nBuild from: ${{ github.head_ref }}"
+        } else {
+          $version = "LMU Telemetry Logger ${{ github.ref_name }}"
+        }
+        Set-Content -Path "release\VERSION.txt" -Value $version
+
+        Write-Output "Release package created successfully!"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
