@@ -40,7 +40,8 @@ class FileManager:
         self,
         csv_content: str,
         lap_summary: Dict[str, Any],
-        session_info: Dict[str, Any]
+        session_info: Dict[str, Any],
+        filename_format: Optional[str] = None
     ) -> str:
         """
         Save lap data to CSV file
@@ -49,11 +50,12 @@ class FileManager:
             csv_content: Complete CSV content as string
             lap_summary: Lap summary data (contains lap number)
             session_info: Session metadata (contains session_id)
+            filename_format: Optional custom filename format (overrides default)
 
         Returns:
             Path to saved file as string
         """
-        filename = self._generate_filename(lap_summary, session_info)
+        filename = self._generate_filename(lap_summary, session_info, filename_format)
         filepath = self.output_dir / filename
 
         # Write CSV content to file
@@ -65,7 +67,8 @@ class FileManager:
     def _generate_filename(
         self,
         lap_summary: Dict[str, Any],
-        session_info: Dict[str, Any]
+        session_info: Dict[str, Any],
+        filename_format: Optional[str] = None
     ) -> str:
         """
         Generate filename for lap data
@@ -78,6 +81,7 @@ class FileManager:
         Args:
             lap_summary: Lap summary (contains lap number)
             session_info: Session info (contains session_id, car, track, etc.)
+            filename_format: Optional custom filename format (overrides default)
 
         Returns:
             Filename string
@@ -116,7 +120,10 @@ class FileManager:
         else:
             car_with_class = car
 
-        filename = self.filename_format.format(
+        # Use custom format if provided, otherwise use default
+        format_string = filename_format if filename_format is not None else self.filename_format
+
+        filename = format_string.format(
             session_id=session_id,
             lap=lap,
             car=car_with_class,

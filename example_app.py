@@ -201,7 +201,7 @@ class TelemetryApp:
             metadata=metadata,
         )
 
-        # Save to file using same format as player laps
+        # Save to file using opponent-specific format (ensures only one file per opponent per session)
         try:
             # Create lap summary with opponent data
             lap_summary = {
@@ -209,12 +209,16 @@ class TelemetryApp:
                 'lap_time': opponent_lap_data.lap_time,
             }
 
-            # Use the standard save_lap method for consistent naming
-            # Format will be: {date}_{time}_{track}_{car}_{driver}_lap{lap}_t{lap_time}s.csv
+            # Use custom filename format for opponents to ensure overwrites
+            # This keeps only the fastest lap per opponent per session
+            # Format: {session_id}_{track}_{car}_{driver}_fastest.csv
+            opponent_filename_format = '{session_id}_{track}_{car}_{driver}_fastest.csv'
+
             filepath = self.file_manager.save_lap(
                 csv_content=csv_content,
                 lap_summary=lap_summary,
-                session_info=session_info
+                session_info=session_info,
+                filename_format=opponent_filename_format
             )
 
             self.opponent_laps_saved += 1
