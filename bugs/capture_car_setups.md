@@ -1,10 +1,25 @@
-## Car Setup Capture Feature
+## Status: ❌ WON'T IMPLEMENT
+
+**Decision Date:** 2025-11-20
+**Reason:** Opponent car setups are NOT available via shared memory or REST API (confirmed via research). The original feature request was specifically to "capture car setups so that local players can benefit from opponents setups." Since opponent setup data is inaccessible (standard sim racing limitation for competitive fairness), the core value proposition cannot be achieved.
+
+**What's Available:**
+- ✅ Player's own setup via REST API (`/rest/garage/setup`)
+- ❌ Opponent setups (NOT accessible)
+- ⚠️ Limited real-time telemetry (brake bias, wing angles, tire pressures)
+
+**Why Not Implement Player-Only Setup Capture?**
+The original use case was learning from opponent setups. Capturing only the player's own setup has limited value since players typically know what setup they're running. Alternative tools (setup managers, in-game features) already handle personal setup management better.
+
+---
+
+## Original Feature Request (Archive)
 
 ### Overview
 Capture car setup data for the player's vehicle to enable setup management, lap time correlation, and performance tracking. This helps users identify which setups produce the best lap times and understand the relationship between setup changes and performance.
 
-**Status**: Enhancement
-**Priority**: Medium
+**Original Status**: Enhancement
+**Original Priority**: Medium
 **Complexity**: Moderate (REST API integration + file management)
 
 ---
