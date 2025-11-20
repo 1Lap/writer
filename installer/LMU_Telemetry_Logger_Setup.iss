@@ -108,6 +108,8 @@ end;
 
 // Initialize wizard with custom pages
 procedure InitializeWizard;
+var
+  ExistingOutputDir: String;
 begin
   // Create custom page for telemetry output directory selection
   OutputDirPage := CreateInputDirPage(wpSelectDir,
@@ -123,7 +125,6 @@ begin
   if IsUpgrade() then
   begin
     // If upgrading, try to read existing output directory
-    var ExistingOutputDir: String;
     if RegQueryStringValue(HKCU, 'Software\{#MyAppName}', 'OutputDir', ExistingOutputDir) then
       OutputDirPage.Values[0] := ExistingOutputDir
     else
