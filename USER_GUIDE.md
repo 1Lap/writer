@@ -17,7 +17,24 @@ This is a background telemetry logger for **Le Mans Ultimate (LMU)** that automa
 
 - Windows 10/11
 - Le Mans Ultimate installed
+- **Visual C++ Runtimes installed** (see below)
 - The telemetry plugin must be enabled in LMU (see Setup section)
+
+### Installing LMU Runtime Dependencies
+
+⚠️ **Important**: The telemetry logger requires Visual C++ runtimes to access LMU's shared memory. These runtimes ship with LMU but need to be installed separately.
+
+**Steps:**
+
+1. Navigate to your LMU installation folder (default: `C:\Program Files (x86)\Steam\steamapps\common\Le Mans Ultimate\`)
+2. Open the `support\runtimes\` folder
+3. Install **all** the runtime installers in this folder:
+   - `vc_redist.x64.exe` (Visual C++ Redistributable)
+   - Any other runtime installers present
+4. Follow the installation prompts for each installer
+5. **Restart your computer** after installation (recommended)
+
+**Note**: You only need to do this once. If you've already run LMU successfully, these runtimes may already be installed.
 
 ## Quick Start
 
@@ -120,8 +137,19 @@ When you complete a lap:
 **Solutions**:
 1. Make sure LMU is actually running
 2. Check that you've enabled the plugin (see Setup section above)
-3. Try loading into a track/session (not just the main menu)
-4. Restart LMU after enabling the plugin
+3. **Install the LMU runtimes** (see Requirements section above) - this is the most common cause
+4. Try loading into a track/session (not just the main menu)
+5. Restart LMU after enabling the plugin
+
+### "Failed to load shared memory library" or DLL errors
+
+**Problem**: The pyRfactor2SharedMemory library can't load.
+
+**Solutions**:
+1. **Install the LMU runtimes** from `LMU/support/runtimes/` (see Requirements section)
+2. Make sure you installed the x64 version of the Visual C++ Redistributable
+3. Restart your computer after installing runtimes
+4. Verify LMU itself runs properly (if LMU doesn't work, the logger won't either)
 
 ### "Process: NO"
 

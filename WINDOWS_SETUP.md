@@ -7,7 +7,22 @@ Quick reference for continuing development on Windows (Phase 6).
 - [ ] Python 3.9+ installed on Windows
 - [ ] Git installed
 - [ ] Le Mans Ultimate installed
+- [ ] **LMU Runtime Dependencies installed** (see below)
 - [ ] GitHub authentication configured
+
+### Install LMU Runtime Dependencies
+
+⚠️ **Required for pyRfactor2SharedMemory to work**
+
+The telemetry library requires Visual C++ runtimes to access LMU's shared memory. These ship with LMU:
+
+1. Navigate to: `C:\Program Files (x86)\Steam\steamapps\common\Le Mans Ultimate\support\runtimes\`
+2. Install all runtime installers in this folder:
+   - `vc_redist.x64.exe` (Visual C++ Redistributable)
+   - Any other installers present
+3. Restart your computer (recommended)
+
+**Note**: If you've already played LMU, these may already be installed.
 
 ## Initial Setup
 
@@ -118,11 +133,14 @@ If adding new functionality:
 **Shared memory not available:**
 - LMU must be running
 - Check if LMU plugin is enabled (should be by default)
+- **Install LMU runtimes** (see Prerequisites above) - most common cause
 - Try restarting LMU
 
-**Import errors:**
+**Import errors or DLL load failures:**
 - Verify `pip install -r requirements-windows.txt` succeeded
 - Check virtual environment is activated
+- **Install LMU runtimes** from `LMU/support/runtimes/` (see Prerequisites above)
+- Ensure you installed the x64 version of Visual C++ Redistributable
 
 **CSV format mismatches:**
 - Compare field-by-field with the MVP reference CSV
