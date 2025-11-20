@@ -47,3 +47,6 @@ LMU_Telemetry_Logger_v*/
 
 # External libraries (vendored)
 pyRfactor2SharedMemory/
+
+# Installer build outputs
+installer/output/

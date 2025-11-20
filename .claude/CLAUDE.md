@@ -185,18 +185,31 @@ pytest --cov=src --cov-report=html
     - [x] Input scaling (0-100% for throttle/brake/steer)
 
 ### 🔄 Current Phase: Phase 7 - Distribution
-**Status**: Executable built, final validation pending
+**Status**: Installer implemented, ready for testing and release
 
 Completed:
 - [x] PyInstaller build script (`build.bat`)
 - [x] Executable created (`LMU_Telemetry_Logger_v1.0/LMU_Telemetry_Logger.exe`)
 - [x] User documentation (`USER_GUIDE.md`)
+- [x] Windows installer implementation ✅ **NEW** (2025-11-20)
+  - [x] Inno Setup installer script (`installer/LMU_Telemetry_Logger_Setup.iss`)
+  - [x] Build automation script (`build_installer.bat`)
+  - [x] Default configuration template (`installer/config_default.json`)
+  - [x] Installer documentation (`installer/README.md`)
+  - [x] Updated USER_GUIDE.md with installation instructions
+  - [x] Custom output directory selection during installation
+  - [x] Upgrade detection with data preservation
+  - [x] Uninstall with optional data cleanup
+  - [x] Start Menu shortcuts (app, output folder, user guide, uninstall)
+  - [x] Optional desktop shortcut and auto-start with Windows
+  - [x] Registry integration (Programs & Features)
 
 Remaining:
-- [ ] Final validation of v1.0 executable
-- [ ] Performance optimization (address 20Hz vs 100Hz capture rate issue)
-- [ ] Documentation review and updates
-- [ ] Release preparation
+- [ ] Build and test the installer on Windows
+- [ ] Final validation of v1.0 installer
+- [ ] Performance optimization (address 43Hz capture rate - currently acceptable)
+- [ ] Release preparation (GitHub release, changelog)
+- [ ] Optional: Code signing certificate (future enhancement)
 
 ## Important Code Patterns
 

@@ -11,7 +11,90 @@ This is a background telemetry logger for **Le Mans Ultimate (LMU)** that automa
 - ✅ Saves complete lap data to CSV when you cross the finish line
 - ✅ MVP format output (12 essential channels, ~1MB per lap)
 - ✅ Compatible with browser-based telemetry viewers
-- ✅ No configuration needed - just enable the plugin and drive!
+- ✅ System tray interface with start/stop/pause controls
+- ✅ No configuration needed - just install and drive!
+
+## Installation
+
+### Using the Installer (Recommended)
+
+1. **Download the installer:**
+   - Download `LMU_Telemetry_Logger_Setup_v1.0.0.exe` from the latest release
+   - Size: ~8-10 MB
+
+2. **Run the installer:**
+   - Double-click the installer to start
+   - Windows SmartScreen may show a warning (see note below)
+   - Follow the installation wizard
+
+3. **Choose your settings:**
+   - **Installation Location**: Default is `C:\Program Files\LMU Telemetry Logger`
+   - **Telemetry Output Directory**: Default is `Documents\LMU Telemetry`
+     - You can choose a different location if desired
+   - **Optional**: Create desktop shortcut
+   - **Optional**: Start with Windows
+
+4. **Complete installation:**
+   - Click "Install" to begin
+   - Wait for installation to complete (~30 seconds)
+   - Optionally launch the application immediately
+
+**Windows SmartScreen Warning:**
+If you see "Windows protected your PC", this is normal for unsigned installers:
+- Click **"More info"**
+- Click **"Run anyway"**
+- This happens because the installer is not yet code-signed (requires expensive certificate)
+
+### What Gets Installed
+
+**Files:**
+- Application executable: `C:\Program Files\LMU Telemetry Logger\LMU_Telemetry_Logger.exe`
+- Configuration file: `config.json`
+- User guide: `USER_GUIDE.md`
+
+**Shortcuts:**
+- Start Menu → LMU Telemetry Logger (launch app)
+- Start Menu → Open Output Folder (quick access to telemetry files)
+- Start Menu → User Guide
+- Desktop shortcut (if selected during installation)
+
+**Directories:**
+- Default output: `Documents\LMU Telemetry` (where CSV files are saved)
+
+### Manual Installation (Advanced Users)
+
+If you prefer not to use the installer:
+
+1. Download the standalone executable bundle
+2. Extract to a folder of your choice
+3. Run `LMU_Telemetry_Logger.exe` directly
+4. CSV files will be saved to `telemetry_output/` in the same directory
+
+### Upgrading
+
+When a new version is released:
+
+1. Download the new installer
+2. Run the installer (same process as initial installation)
+3. The installer will detect your existing installation
+4. Your configuration and telemetry data will be **automatically preserved**
+5. Only the application files will be updated
+
+### Uninstalling
+
+To remove the application:
+
+**Option 1: Windows Settings**
+1. Open Windows Settings → Apps → Installed apps
+2. Find "LMU Telemetry Logger"
+3. Click the three dots → Uninstall
+4. Choose whether to keep or delete your telemetry data
+
+**Option 2: Start Menu**
+1. Start Menu → LMU Telemetry Logger → Uninstall
+2. Follow the uninstall wizard
+
+**Note:** You can choose to keep your telemetry data and configuration when uninstalling, which is useful if you plan to reinstall later.
 
 ## Requirements
 
@@ -64,16 +147,43 @@ This is a background telemetry logger for **Le Mans Ultimate (LMU)** that automa
 
 ### 2. Run the Logger
 
+**If installed with the installer:**
+1. Launch from Start Menu: **LMU Telemetry Logger**
+2. The app will appear in your system tray (bottom-right corner, near the clock)
+3. Look for the gray/yellow/green icon
+4. **Start LMU** and load into a practice session
+5. **Drive your laps** - the logger will automatically detect LMU and capture data
+6. **Check the output** - CSV files are saved to `Documents\LMU Telemetry` (or your chosen location)
+
+**If running the standalone executable:**
 1. **Start LMU** and load into a practice session
 2. **Run `LMU_Telemetry_Logger.exe`**
-3. You'll see a console window showing the logger status
+3. You'll see a system tray icon (or console window for older versions)
 4. **Drive your laps** - the logger will automatically capture data
-5. **Check the output** - CSV files are saved to `telemetry_output/` folder
+5. **Check the output** - CSV files are saved to the output directory
 
-### 3. Stop the Logger
+### 3. System Tray Controls
 
-- Press `Ctrl+C` in the console window to stop
-- Or just close the window
+**Right-click the tray icon** to access controls:
+- **Start Logging / Stop Logging** - Toggle telemetry capture
+- **Pause Logging / Resume Logging** - Temporarily pause (only available while logging)
+- **Settings** - Configure output directory and other options
+- **Open Output Folder** - Quick access to your telemetry files
+- **Quit** - Exit the application
+
+**Icon Colors:**
+- **Gray**: Idle (waiting for LMU)
+- **Yellow**: LMU detected (waiting to start logging)
+- **Green**: Actively logging telemetry
+- **Orange**: Logging paused
+- **Red**: Error state
+
+**Hover over the icon** to see current status (e.g., "Logging Lap 5 - 1234 samples")
+
+### 4. Stop the Logger
+
+- **System tray**: Right-click the icon → Quit
+- **Console mode**: Press `Ctrl+C` or close the window
 
 ## Output Files
 
