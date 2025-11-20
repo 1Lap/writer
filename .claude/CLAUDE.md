@@ -115,27 +115,35 @@ pytest --cov=src --cov-report=html
 - `test_opponent_tracker.py` - 11 tests
 - `test_example_app_integration.py` - 4 tests
 - `test_telemetry_real.py` - 2 tests
-- **Total: 106 tests passing**
+- `test_tray_ui.py` - 15 tests (NEW - System Tray UI)
+- **Total: 121 tests passing**
 
 ## Phase Status
 
-### Phase Progress (Phases 1-4, 6 Complete; Phase 5 Partially Complete)
+### Phase Progress (Phases 1-6 Complete; Phase 7 In Progress)
 - [x] Phase 1: Setup & Cross-Platform Development Foundation
 - [x] Phase 2: Core Logger Service Development
 - [x] Phase 3: CSV Formatter Implementation (MVP format)
 - [x] Phase 4: File Management & Configuration
-- [~] Phase 5: System Tray UI & User Controls ⚠️ **PARTIALLY IMPLEMENTED**
-  - [ ] System tray icon and menu (not implemented)
-  - [ ] Start/Stop/Pause controls via tray (not implemented)
-  - [x] Settings/configuration UI ✅ **COMPLETE** (2025-11-20)
+- [x] Phase 5: System Tray UI & User Controls ✅ **COMPLETE** (2025-11-20)
+  - [x] System tray icon and menu ✅ **COMPLETE**
+  - [x] Start/Stop/Pause controls via tray ✅ **COMPLETE**
+  - [x] Settings/configuration UI ✅ **COMPLETE**
     - [x] Settings dialog with tkinter GUI
     - [x] Output directory, opponent tracking, poll rate configuration
     - [x] Save/Load/Validate config.json
-    - [x] Integrated with `example_app.py` (--settings flag)
+    - [x] Integrated with `example_app.py` and `tray_app.py` (--settings flag)
     - [x] 13 comprehensive tests
-  - [ ] Status display in tray (not implemented)
-  - **Note**: `pystray` is in requirements.txt but system tray not yet implemented
-  - **Current**: Application runs as command-line with optional settings dialog
+  - [x] Status display in tray with tooltips ✅ **COMPLETE**
+  - [x] Icon state indicators (gray/yellow/green/orange/red) ✅ **COMPLETE**
+  - [x] Open Output Folder menu item ✅ **COMPLETE**
+  - [x] Threading integration (telemetry in background, tray in main thread) ✅ **COMPLETE**
+  - **Implementation**:
+    - `src/tray_ui.py` - TrayUI class with pystray integration
+    - `tray_app.py` - New entry point for system tray mode
+    - `tests/test_tray_ui.py` - 15 comprehensive tests
+    - All Must Have and Nice to Have requirements met
+  - **Usage**: `python tray_app.py` or `python tray_app.py --settings`
 - [x] Phase 6: Windows Testing & Real Telemetry
   - [x] `RealTelemetryReader` implemented using `pyRfactor2SharedMemory`
   - [x] Tested with live LMU on Windows
@@ -350,14 +358,18 @@ Before making significant changes:
 
 ## Success Criteria
 
-### ⚠️ Phase 5 (System Tray UI & User Controls) - NOT IMPLEMENTED
-- [ ] System tray icon displays on Windows/macOS
-- [ ] Tray menu shows: Start/Stop, Pause/Resume, Settings, Quit
-- [ ] Status indicator in tray (Idle, Detecting, Logging)
-- [ ] Settings dialog for output directory configuration
-- [ ] Balloon notifications for lap completion
-- [ ] Graceful startup and shutdown
-- [ ] Auto-start with Windows option (optional)
+### ✅ Phase 5 (System Tray UI & User Controls) - COMPLETE
+- [x] System tray icon displays on Windows/macOS
+- [x] Tray menu shows: Start/Stop, Pause/Resume, Open Folder, Quit
+- [x] Status indicator in tray (Idle, Detecting, Logging) via tooltips
+- [x] Settings dialog for output directory configuration (tkinter GUI)
+- [x] Icon state indicators (gray/yellow/green/orange/red)
+- [x] Graceful startup and shutdown
+- [x] Dynamic menu items based on state
+- [x] Cross-platform Open Folder support (Windows/macOS/Linux)
+- [x] 15 comprehensive unit tests
+- [ ] Balloon notifications for lap completion (not implemented - optional)
+- [ ] Auto-start with Windows option (not implemented - optional)
 
 ### ✅ Phase 6 (Windows Testing) - COMPLETE
 - [x] RealTelemetryReader implemented
