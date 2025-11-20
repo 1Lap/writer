@@ -1,15 +1,34 @@
 # Bug: Opponent Car Name Shows Team Name Instead of Car Make/Model
 
-**Status**: DEBUG LOGGING ADDED - AWAITING TEST RESULTS
+**Status**: RESOLVED ✅
 **Priority**: Medium (affects file organization and searchability)
 **Discovered**: 2025-11-20 (v0.2.1 testing)
+**Resolved**: 2025-11-20
 **Affects**: Opponent lap filename generation
-
-**Debug Logging**: Added to `src/telemetry/telemetry_real.py:305-318`
 
 ---
 
-## Description
+## Resolution Summary
+
+**Investigation Complete**: LMU shared memory does NOT expose car make/model separately. Only team entry name (e.g., "Iron Dames #85") and vehicle class (e.g., "GTE", "LMP2") are available.
+
+**Solution Implemented**: Added vehicle class to improve organization:
+1. ✅ `car_class` field already captured in `telemetry_real.py` (line 403)
+2. ✅ Filename already includes class prefix when available (e.g., "gte_iron-dames-#85")
+3. ✅ Added `CarClass` to CSV metadata section in `mvp_format.py` (line 191-194)
+
+**Result**:
+- Filenames now show class + team (e.g., "gte_iron-dames-#85")
+- CSV metadata includes `CarClass` field (e.g., "GTE", "LMP2", "GT3")
+- Better organization by vehicle class for comparison laps
+- All 93 tests passing
+
+**Files Changed**:
+- `src/mvp_format.py` - Added CarClass to metadata section
+
+---
+
+## Original Issue Description
 
 The opponent lap CSV filenames currently show the **team name** (e.g., "Proton Competition #16") instead of the **car make/model** (e.g., "Oreca 07 LMP2" or "BMW M4 GT3").
 

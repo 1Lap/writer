@@ -187,6 +187,12 @@ def build_metadata_block(
     metadata["CarName"] = _first_value(
         session_info, "car_name", "CarName", fallback="Unknown Car"
     )
+
+    # Add car class if available (e.g., "GTE", "LMP2", "GT3")
+    car_class = session_info.get("car_class")
+    if car_class:
+        metadata["CarClass"] = str(car_class)
+
     metadata["SessionUTC"] = _resolve_session_time(session_info)
     metadata["LapTime [s]"] = _format_decimal(_max_sample_value(lap_samples, "LapTime [s]"), 3)
 
