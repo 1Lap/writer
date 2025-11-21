@@ -3,7 +3,7 @@
 
 ; Read version from command line if provided, otherwise use default
 #ifndef MyAppVersion
-  #define MyAppVersion "0.3.0"
+  #define MyAppVersion "0.3.1"
 #endif
 
 #define MyAppName "LMU Telemetry Logger"
