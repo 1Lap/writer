@@ -46,7 +46,8 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
         else
           # For PRs or non-tag pushes, read from src/__init__.py
-          VERSION=$(grep -oP '__version__ = "\K[^"]+' src/__init__.py)
+          # Use sed for better cross-platform compatibility
+          VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' src/__init__.py)
         fi
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Detected version: $VERSION"
