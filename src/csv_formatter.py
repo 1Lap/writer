@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 from typing import Any, Dict, Iterable, List, Mapping
 
@@ -40,6 +41,10 @@ class CSVFormatter:
             "SessionUTC",
             "LapTime [s]",
             "TrackLen [m]",
+            "TrackMap",  # Track outline waypoints (JSON array of [x,z] coordinates)
+            "TrackMapPitLane",  # Pit lane waypoints (JSON array of [x,z] coordinates)
+            "TrackMapWaypoints",  # Total waypoint count
+            "TrackMapSource",  # Source of track map data (e.g., "LMU_REST_API")
         ]
 
     def format_lap(
@@ -57,11 +62,18 @@ class CSVFormatter:
         # Metadata preamble
         for key in self.metadata_order:
             if key in metadata:
-                lines.append(f"{key},{metadata[key]}")
+                value = metadata[key]
+                # JSON-encode track map arrays
+                if key in ("TrackMap", "TrackMapPitLane") and isinstance(value, (list, tuple)):
+                    value = json.dumps(value, separators=(',', ':'))
+                lines.append(f"{key},{value}")
 
         for key, value in metadata.items():
             if key in self.metadata_order:
                 continue
+            # JSON-encode any list/dict values
+            if isinstance(value, (list, dict)):
+                value = json.dumps(value, separators=(',', ':'))
             lines.append(f"{key},{value}")
 
         lines.append("")  # Blank line between metadata and telemetry

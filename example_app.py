@@ -119,6 +119,17 @@ class TelemetryApp:
                     session_info['car_class'] = vehicle_meta.get('class', '')
                     session_info['team_name'] = vehicle_meta.get('team', '')
 
+            # Fetch track map (once per track, cached)
+            track_name = session_info.get('track_name', '')
+            if track_name:
+                trackmap_data = self.telemetry_reader.rest_api.get_trackmap(track_name=track_name)
+                if trackmap_data:
+                    # Add track map to session_info for metadata
+                    session_info['track_map'] = trackmap_data.get('track', [])
+                    session_info['track_map_pit_lane'] = trackmap_data.get('pit_lane', [])
+                    session_info['track_map_waypoints'] = trackmap_data.get('waypoint_count', 0)
+                    session_info['track_map_source'] = trackmap_data.get('source', '')
+
         # Detect sector boundaries from lap data
         track_length = session_info.get('track_length', 0.0)
         if track_length > 0 and lap_data:

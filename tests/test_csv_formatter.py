@@ -201,3 +201,71 @@ class TestCSVFormatter:
         # But header should not have LapTime column
         header_line = [l for l in lines if l.startswith("LapDistance [m]")][0]
         assert "LapTime [s]" not in header_line
+
+    def test_track_map_json_encoding(self, formatter, sample_row):
+        """Test that track map waypoints are JSON-encoded in metadata"""
+        metadata = OrderedDict([
+            ("Format", "LMUTelemetry v3"),
+            ("TrackName", "Test Track"),
+            ("TrackMap", [[-100.0, -200.0], [-101.0, -201.0], [-102.0, -202.0]]),
+            ("TrackMapPitLane", [[-50.0, -150.0], [-51.0, -151.0]]),
+            ("TrackMapWaypoints", 5),
+            ("TrackMapSource", "LMU_REST_API"),
+        ])
+
+        result = formatter.format_lap([sample_row], metadata)
+        lines = result.strip().split("\n")
+
+        # Track map should be JSON-encoded
+        track_map_line = [l for l in lines if l.startswith("TrackMap,")][0]
+        assert track_map_line == 'TrackMap,[[-100.0,-200.0],[-101.0,-201.0],[-102.0,-202.0]]'
+
+        # Pit lane should be JSON-encoded
+        pit_lane_line = [l for l in lines if l.startswith("TrackMapPitLane,")][0]
+        assert pit_lane_line == 'TrackMapPitLane,[[-50.0,-150.0],[-51.0,-151.0]]'
+
+        # Waypoint count should be plain number
+        waypoint_line = [l for l in lines if l.startswith("TrackMapWaypoints,")][0]
+        assert waypoint_line == "TrackMapWaypoints,5"
+
+        # Source should be plain string
+        source_line = [l for l in lines if l.startswith("TrackMapSource,")][0]
+        assert source_line == "TrackMapSource,LMU_REST_API"
+
+    def test_track_map_optional(self, formatter, sample_row):
+        """Test that track map is optional - CSV works without it"""
+        metadata = OrderedDict([
+            ("Format", "LMUTelemetry v3"),
+            ("TrackName", "Test Track"),
+            # No track map fields
+        ])
+
+        result = formatter.format_lap([sample_row], metadata)
+        lines = result.strip().split("\n")
+
+        # Should not have track map lines
+        assert not any(l.startswith("TrackMap,") for l in lines)
+        assert not any(l.startswith("TrackMapPitLane,") for l in lines)
+
+        # But should still be valid CSV
+        assert "Format,LMUTelemetry v3" in lines
+        assert any(l.startswith("LapDistance [m]") for l in lines)
+
+    def test_track_map_empty_arrays(self, formatter, sample_row):
+        """Test handling of empty track map arrays"""
+        metadata = OrderedDict([
+            ("Format", "LMUTelemetry v3"),
+            ("TrackMap", []),
+            ("TrackMapPitLane", []),
+            ("TrackMapWaypoints", 0),
+        ])
+
+        result = formatter.format_lap([sample_row], metadata)
+        lines = result.strip().split("\n")
+
+        # Empty arrays should be encoded as []
+        track_map_line = [l for l in lines if l.startswith("TrackMap,")][0]
+        assert track_map_line == "TrackMap,[]"
+
+        pit_lane_line = [l for l in lines if l.startswith("TrackMapPitLane,")][0]
+        assert pit_lane_line == "TrackMapPitLane,[]"
