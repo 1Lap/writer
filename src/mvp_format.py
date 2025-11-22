@@ -226,6 +226,11 @@ def build_metadata_block(
             ("TyreCompound", session_info.get("tyre_compound")),
             ("Weather", session_info.get("weather")),
             ("FuelAtStart", session_info.get("fuel_at_start")),
+            # Track map data (from REST API)
+            ("TrackMap", session_info.get("track_map")),
+            ("TrackMapPitLane", session_info.get("track_map_pit_lane")),
+            ("TrackMapWaypoints", session_info.get("track_map_waypoints")),
+            ("TrackMapSource", session_info.get("track_map_source")),
         ]
     )
 

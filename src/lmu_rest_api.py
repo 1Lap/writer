@@ -37,6 +37,7 @@ class LMURestAPI:
         """
         self.base_url = base_url
         self.vehicle_cache: Optional[Dict[str, Dict[str, Any]]] = None
+        self.trackmap_cache: Dict[str, Dict[str, Any]] = {}
 
     def is_available(self) -> bool:
         """
@@ -217,6 +218,69 @@ class LMURestAPI:
 
         return None
 
+    def get_trackmap(self, track_name: str = "", force_refresh: bool = False) -> Dict[str, Any]:
+        """
+        Fetch track map waypoints from /rest/watch/trackmap
+
+        Returns track outline (type 0) and pit lane (type 1) waypoints.
+        Results are cached by track name to avoid excessive API calls.
+
+        Args:
+            track_name: Track name for caching (optional)
+            force_refresh: If True, bypass cache and fetch fresh data
+
+        Returns:
+            Dictionary with track map data:
+            {
+                'track': [[x, z], [x, z], ...],        # Type 0 waypoints
+                'pit_lane': [[x, z], [x, z], ...],     # Type 1 waypoints
+                'waypoint_count': int,                  # Total waypoints
+                'source': 'LMU_REST_API'
+            }
+
+            Returns empty dict {} if API is unavailable or error occurs.
+        """
+        # Check cache first (if track_name provided)
+        if track_name and not force_refresh and track_name in self.trackmap_cache:
+            return self.trackmap_cache[track_name]
+
+        # Fetch from API
+        try:
+            req = Request(f"{self.base_url}/rest/watch/trackmap")
+            with urlopen(req, timeout=2) as response:
+                waypoints = json.loads(response.read().decode('utf-8'))
+
+            # Filter to track outline (type 0) and pit lane (type 1)
+            # Ignore pit bays (types 2+)
+            track_outline = [[w['x'], w['z']] for w in waypoints if w['type'] == 0]
+            pit_lane = [[w['x'], w['z']] for w in waypoints if w['type'] == 1]
+
+            result = {
+                'track': track_outline,
+                'pit_lane': pit_lane,
+                'waypoint_count': len(track_outline) + len(pit_lane),
+                'source': 'LMU_REST_API'
+            }
+
+            # Cache the result (if track_name provided)
+            if track_name:
+                self.trackmap_cache[track_name] = result
+
+            return result
+
+        except (URLError, HTTPError, socket.timeout, ConnectionRefusedError):
+            # API not available - return empty dict
+            return {}
+        except (KeyError, ValueError, json.JSONDecodeError) as e:
+            # Invalid response format - return empty dict
+            print(f"[WARNING] Error parsing track map data from REST API: {e}")
+            return {}
+        except Exception as e:
+            # Unexpected error - log and return empty
+            print(f"[WARNING] Error fetching track map from REST API: {e}")
+            return {}
+
     def clear_cache(self):
-        """Clear cached vehicle data"""
+        """Clear cached vehicle and track map data"""
         self.vehicle_cache = None
+        self.trackmap_cache = {}
