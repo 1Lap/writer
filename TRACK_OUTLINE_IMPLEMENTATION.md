@@ -240,17 +240,54 @@ After implementation, lap viewer should be able to:
 
 ## Next Steps
 
-**IMMEDIATE:**
-1. Run `python test_trackmap_endpoint.py` on Windows with LMU
-2. Share the output so we can analyze waypoint structure
-3. Check Swagger docs for endpoint specification
+### ✅ COMPLETED:
+1. ✅ Run `python test_trackmap_endpoint.py` - **Done!**
+2. ✅ Analyze waypoint structure - **Done!**
+3. ✅ Verify coordinate system compatibility - **Confirmed!**
 
-**THEN:**
-- Design optimal data structure based on what we learn
-- Implement REST API integration
-- Update CSV formatter and session manager
-- Test with lap viewer integration
+### 🔄 IN PROGRESS:
+4. ⏳ Analyze type field distribution
+   - Run: `python test_trackmap_types.py`
+   - Determine which types to include (racing line vs all)
+   - Check Swagger docs: `http://localhost:6397/swagger/index.html`
+
+### 📋 TODO:
+5. ⬜ Design data structure (after type analysis)
+   - Choose filtering strategy (all types vs dominant type)
+   - Decide on downsampling rate
+   - Finalize CSV metadata format
+
+6. ⬜ Implement REST API integration
+   - Add `get_trackmap()` to `LMURestAPI` class
+   - Implement filtering/downsampling logic
+   - Add caching by track name
+
+7. ⬜ Update CSV formatter
+   - Add `TrackMap` to metadata section
+   - JSON serialization for waypoint array
+   - Handle missing track map gracefully
+
+8. ⬜ Update session manager
+   - Fetch track map once per session (on first lap)
+   - Include in lap metadata
+   - Cache for subsequent laps on same track
+
+9. ⬜ Write tests
+   - Test track map fetch and caching
+   - Test filtering logic
+   - Test CSV format with track map
+
+10. ⬜ Update documentation
+    - Update `telemetry_format_analysis.md`
+    - Add track map section to `TECHNICAL_SPEC.md`
+    - Update user guide
+
+11. ⬜ Lap viewer integration (separate codebase)
+    - Parse track map from CSV metadata
+    - Render track outline
+    - Overlay driven line
+    - Add apex analysis features
 
 ---
 
-**Updated:** 2025-11-22
+**Updated:** 2025-11-22 (After waypoint testing)
