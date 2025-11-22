@@ -29,15 +29,15 @@ Open Command Prompt or PowerShell:
 
 ```cmd
 cd C:\
-git clone https://github.com/davedean/eztel-writer.git
-cd eztel-writer
+git clone https://github.com/1Lap/writer.git
+cd writer
 ```
 
 Or download specific release:
 ```cmd
 cd C:\
-git clone --branch v0.2.0 https://github.com/davedean/eztel-writer.git
-cd eztel-writer
+git clone --branch v0.2.0 https://github.com/1Lap/writer.git
+cd writer
 ```
 
 ### 2. Create Virtual Environment
@@ -182,7 +182,7 @@ To test opponent lap tracking:
 ## Report Issues
 
 Found a bug? Report at:
-https://github.com/davedean/eztel-writer/issues
+https://github.com/1Lap/writer/issues
 
 Include:
 - Error message

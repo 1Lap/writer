@@ -26,7 +26,7 @@ class TestCheckForUpdate:
             'assets': [
                 {
                     'name': 'LMU_Telemetry_Logger.exe',
-                    'browser_download_url': 'https://github.com/davedean/eztel-writer/releases/download/v1.1.0/LMU_Telemetry_Logger.exe'
+                    'browser_download_url': 'https://github.com/1Lap/writer/releases/download/v1.1.0/LMU_Telemetry_Logger.exe'
                 }
             ]
         }
@@ -54,7 +54,7 @@ class TestCheckForUpdate:
             'assets': [
                 {
                     'name': 'LMU_Telemetry_Logger.exe',
-                    'browser_download_url': 'https://github.com/davedean/eztel-writer/releases/download/v1.0.0/LMU_Telemetry_Logger.exe'
+                    'browser_download_url': 'https://github.com/1Lap/writer/releases/download/v1.0.0/LMU_Telemetry_Logger.exe'
                 }
             ]
         }
@@ -103,7 +103,7 @@ class TestCheckForUpdate:
             'assets': [
                 {
                     'name': 'source.zip',
-                    'browser_download_url': 'https://github.com/davedean/eztel-writer/archive/v1.1.0.zip'
+                    'browser_download_url': 'https://github.com/1Lap/writer/archive/v1.1.0.zip'
                 }
             ]
         }
@@ -137,7 +137,7 @@ class TestCheckForUpdate:
             'assets': [
                 {
                     'name': 'LMU_Telemetry_Logger.exe',
-                    'browser_download_url': 'https://github.com/davedean/eztel-writer/releases/download/v2.0.0/LMU_Telemetry_Logger.exe'
+                    'browser_download_url': 'https://github.com/1Lap/writer/releases/download/v2.0.0/LMU_Telemetry_Logger.exe'
                 }
             ]
         }
@@ -296,7 +296,7 @@ class TestUpdateCheckerConfiguration:
         """Test that GitHub API URL is correctly formatted"""
         checker = UpdateChecker()
 
-        assert 'davedean' in checker.GITHUB_API
-        assert 'eztel-writer' in checker.GITHUB_API
+        assert '1Lap' in checker.GITHUB_API
+        assert 'writer' in checker.GITHUB_API
         assert 'releases/latest' in checker.GITHUB_API
         assert checker.GITHUB_API.startswith('https://')

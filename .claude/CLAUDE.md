@@ -292,6 +292,40 @@ git commit -m "descriptive message"
 gh pr create --draft
 ```
 
+### Version Management
+
+**When preparing a new release, update the version in these 2 files:**
+
+1. **`src/__init__.py`** - Main version source
+   ```python
+   __version__ = "0.3.2"  # Update this
+   ```
+
+2. **`installer/1Lap_Setup.iss`** - Installer version
+   ```pascal
+   #define MyAppVersion "0.3.2"  # Update this
+   ```
+
+**Note:** The build system automatically reads the version from `src/__init__.py` for:
+- PyInstaller builds (via `build.bat`)
+- GitHub Actions builds (via `.github/workflows/build-release.yml`)
+- The installer script can also read it dynamically when building
+
+**Version update workflow:**
+```bash
+# 1. Update version in both files above
+# 2. Commit the version bump
+git add src/__init__.py installer/1Lap_Setup.iss
+git commit -m "Bump version to X.Y.Z"
+
+# 3. Create and push a git tag
+git tag vX.Y.Z
+git push origin vX.Y.Z
+
+# 4. Create GitHub release
+gh release create vX.Y.Z --generate-notes
+```
+
 ### Bug Tracking Workflow
 
 **IMPORTANT**: When fixing bugs listed in the `bugs/` folder, always update the bug file to reflect the resolution.

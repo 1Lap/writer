@@ -3,12 +3,12 @@
 
 ; Read version from command line if provided, otherwise use default
 #ifndef MyAppVersion
-  #define MyAppVersion "0.3.1"
+  #define MyAppVersion "0.3.2"
 #endif
 
 #define MyAppName "1Lap"
 #define MyAppPublisher "1Lap Team"
-#define MyAppURL "https://github.com/davedean/eztel-writer"
+#define MyAppURL "https://github.com/1Lap/writer"
 #define MyAppExeName "1Lap.exe"
 
 [Setup]

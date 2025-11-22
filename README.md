@@ -42,7 +42,7 @@ A background telemetry logger for Le Mans Ultimate that automatically captures a
 
 ### Option 1: Windows Installer (Recommended)
 
-1. **Download**: Get `LMU_Telemetry_Logger_Setup.exe` from [GitHub Releases](https://github.com/davedean/eztel-writer/releases/tag/v0.3.0)
+1. **Download**: Get `LMU_Telemetry_Logger_Setup.exe` from [GitHub Releases](https://github.com/1Lap/writer/releases/tag/v0.3.0)
 2. **Install**: Run the installer and follow the wizard
 3. **Launch**: Start from Start Menu or Desktop shortcut
 4. **Configure**: Right-click tray icon → Settings
@@ -50,7 +50,7 @@ A background telemetry logger for Le Mans Ultimate that automatically captures a
 
 ### Option 2: Portable Executable
 
-1. **Download**: Get `LMU_Telemetry_Logger.zip` from [GitHub Releases](https://github.com/davedean/eztel-writer/releases/tag/v0.3.0)
+1. **Download**: Get `LMU_Telemetry_Logger.zip` from [GitHub Releases](https://github.com/1Lap/writer/releases/tag/v0.3.0)
 2. **Extract**: Unzip to any folder
 3. **Run**: Double-click `LMU_Telemetry_Logger.exe`
 
@@ -58,8 +58,8 @@ A background telemetry logger for Le Mans Ultimate that automatically captures a
 
 1. **Clone**:
    ```cmd
-   git clone --branch v0.3.0 https://github.com/davedean/eztel-writer.git
-   cd eztel-writer
+   git clone --branch v0.3.0 https://github.com/1Lap/writer.git
+   cd writer
    ```
 
 2. **Setup**:

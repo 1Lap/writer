@@ -28,8 +28,8 @@ The telemetry library requires Visual C++ runtimes to access LMU's shared memory
 
 ### 1. Clone Repository
 ```bash
-git clone git@github.com:davedean/eztel-writer.git
-cd eztel-writer
+git clone git@github.com:1Lap/writer.git
+cd writer
 ```
 
 ### 2. Create Virtual Environment
