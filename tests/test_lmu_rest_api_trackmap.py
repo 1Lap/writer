@@ -48,7 +48,7 @@ class TestGetTrackmap:
         api = LMURestAPI()
 
         # Mock the API response
-        with patch('urllib.request.urlopen') as mock_urlopen:
+        with patch('src.lmu_rest_api.urlopen') as mock_urlopen:
             mock_response = Mock()
             mock_response.status = 200
             mock_response.read.return_value = json.dumps(SAMPLE_TRACKMAP_RESPONSE).encode('utf-8')
@@ -83,7 +83,7 @@ class TestGetTrackmap:
         """Test that pit bays (types 2+) are filtered out"""
         api = LMURestAPI()
 
-        with patch('urllib.request.urlopen') as mock_urlopen:
+        with patch('src.lmu_rest_api.urlopen') as mock_urlopen:
             mock_response = Mock()
             mock_response.status = 200
             mock_response.read.return_value = json.dumps(SAMPLE_TRACKMAP_RESPONSE).encode('utf-8')
@@ -105,7 +105,7 @@ class TestGetTrackmap:
         """Test that track maps are cached by track name"""
         api = LMURestAPI()
 
-        with patch('urllib.request.urlopen') as mock_urlopen:
+        with patch('src.lmu_rest_api.urlopen') as mock_urlopen:
             mock_response = Mock()
             mock_response.status = 200
             mock_response.read.return_value = json.dumps(SAMPLE_TRACKMAP_RESPONSE).encode('utf-8')
@@ -129,7 +129,7 @@ class TestGetTrackmap:
         """Test that different tracks are cached separately"""
         api = LMURestAPI()
 
-        with patch('urllib.request.urlopen') as mock_urlopen:
+        with patch('src.lmu_rest_api.urlopen') as mock_urlopen:
             mock_response = Mock()
             mock_response.status = 200
             mock_response.read.return_value = json.dumps(SAMPLE_TRACKMAP_RESPONSE).encode('utf-8')
@@ -148,7 +148,7 @@ class TestGetTrackmap:
         """Test force refresh bypasses cache"""
         api = LMURestAPI()
 
-        with patch('urllib.request.urlopen') as mock_urlopen:
+        with patch('src.lmu_rest_api.urlopen') as mock_urlopen:
             mock_response = Mock()
             mock_response.status = 200
             mock_response.read.return_value = json.dumps(SAMPLE_TRACKMAP_RESPONSE).encode('utf-8')
@@ -169,7 +169,7 @@ class TestGetTrackmap:
         """Test graceful handling when API is unavailable"""
         api = LMURestAPI()
 
-        with patch('urllib.request.urlopen', side_effect=ConnectionRefusedError()):
+        with patch('src.lmu_rest_api.urlopen', side_effect=ConnectionRefusedError()):
             result = api.get_trackmap()
 
         # Should return empty dict
@@ -179,7 +179,7 @@ class TestGetTrackmap:
         """Test handling of HTTP errors"""
         api = LMURestAPI()
 
-        with patch('urllib.request.urlopen') as mock_urlopen:
+        with patch('src.lmu_rest_api.urlopen') as mock_urlopen:
             from urllib.error import HTTPError
             mock_urlopen.side_effect = HTTPError(
                 url="http://localhost:6397/rest/watch/trackmap",
@@ -198,7 +198,7 @@ class TestGetTrackmap:
         """Test handling of timeouts"""
         api = LMURestAPI()
 
-        with patch('urllib.request.urlopen') as mock_urlopen:
+        with patch('src.lmu_rest_api.urlopen') as mock_urlopen:
             import socket
             mock_urlopen.side_effect = socket.timeout()
 
@@ -211,7 +211,7 @@ class TestGetTrackmap:
         """Test handling of invalid JSON response"""
         api = LMURestAPI()
 
-        with patch('urllib.request.urlopen') as mock_urlopen:
+        with patch('src.lmu_rest_api.urlopen') as mock_urlopen:
             mock_response = Mock()
             mock_response.status = 200
             mock_response.read.return_value = b"invalid json{{"
@@ -228,7 +228,7 @@ class TestGetTrackmap:
         """Test handling of empty waypoint list"""
         api = LMURestAPI()
 
-        with patch('urllib.request.urlopen') as mock_urlopen:
+        with patch('src.lmu_rest_api.urlopen') as mock_urlopen:
             mock_response = Mock()
             mock_response.status = 200
             mock_response.read.return_value = json.dumps([]).encode('utf-8')
@@ -253,7 +253,7 @@ class TestGetTrackmap:
         # Response with only Type 0
         type0_only = [w for w in SAMPLE_TRACKMAP_RESPONSE if w['type'] == 0]
 
-        with patch('urllib.request.urlopen') as mock_urlopen:
+        with patch('src.lmu_rest_api.urlopen') as mock_urlopen:
             mock_response = Mock()
             mock_response.status = 200
             mock_response.read.return_value = json.dumps(type0_only).encode('utf-8')
@@ -272,7 +272,7 @@ class TestGetTrackmap:
         """Test clearing track map cache"""
         api = LMURestAPI()
 
-        with patch('urllib.request.urlopen') as mock_urlopen:
+        with patch('src.lmu_rest_api.urlopen') as mock_urlopen:
             mock_response = Mock()
             mock_response.status = 200
             mock_response.read.return_value = json.dumps(SAMPLE_TRACKMAP_RESPONSE).encode('utf-8')
