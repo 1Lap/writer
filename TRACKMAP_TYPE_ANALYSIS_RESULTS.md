@@ -137,89 +137,94 @@ waypoints = racing_line[::3]  # Every 3rd waypoint
 
 ---
 
-## Final Recommendation: **Option B (Types 0 & 1)**
+## ⚠️ UPDATED: Visualization Revealed True Meaning!
 
-### Why This is Perfect for Your Use Case:
+**See `TRACKMAP_VISUALIZATION_FINDINGS.md` for complete analysis.**
 
-1. **Answers "Did I hit the apex?"**
-   - Type 0 shows ideal racing line
-   - Your driven line shows where you actually went
-   - Compare the two!
+### Corrected Type Interpretations (Based on Visual Analysis):
 
-2. **Answers "Did I use all available track?"**
-   - Type 1 shows track boundary/edge
-   - See if you got close to the edge in corners
-   - Analyze track width usage
+- **Type 0**: Track outline/layout (main racing surface) - 854 waypoints
+- **Type 1**: Pit lane (not track edge!) - 341 waypoints
+- **Types 2-143**: Pit bays (individual pit box positions) - 152 waypoints
 
-3. **Manageable Size**
-   - 1,195 waypoints = ~30KB
-   - Only 3% of 1MB CSV file
-   - Negligible impact
+### Revised Recommendation: **Option A (Type 0 Only)**
 
-4. **Simple Implementation**
-   - Just filter `type in [0, 1]`
-   - No complex downsampling logic
-   - Two distinct lines for visualization
+**Why Type 0 is what we need:**
 
-### Implementation Approach
+1. **Track Shape for Context**
+   - Type 0 shows the actual track layout
+   - Compare your driven line to track outline
+   - See corner shapes, straights, chicanes
+
+2. **Simpler and Cleaner**
+   - 854 waypoints = ~20KB (2% of CSV)
+   - One clear track outline
+   - No confusion with pit lane
+
+3. **Pit Lane is Separate**
+   - Type 1 is pit lane, not track edge
+   - Useful for pit detection (optional feature)
+   - Not needed for basic lap visualization
+
+4. **Track Width Analysis**
+   - Type 0 is track center, not edge
+   - Can't precisely measure distance to limits
+   - Would need separate track boundary data
+
+### Implementation Approach (REVISED)
 
 ```python
 def get_trackmap_for_csv(waypoints: List[Dict]) -> Dict[str, Any]:
     """
     Extract track map data for CSV export
 
-    Returns both racing line (type 0) and track edge (type 1)
-    for apex and track width analysis
+    Returns track outline (type 0) for visualization.
+    Optionally includes pit lane (type 1) for advanced features.
     """
-    # Filter to racing line and track edge
-    track_data = [w for w in waypoints if w['type'] in [0, 1]]
+    # Type 0 = Track outline (main racing surface)
+    track_outline = [[w['x'], w['z']] for w in waypoints if w['type'] == 0]
 
-    # Group by type for structured output
-    racing_line = [[w['x'], w['z']] for w in waypoints if w['type'] == 0]
-    track_edge = [[w['x'], w['z']] for w in waypoints if w['type'] == 1]
+    # Type 1 = Pit lane (optional)
+    pit_lane = [[w['x'], w['z']] for w in waypoints if w['type'] == 1]
 
     return {
-        'racing_line': racing_line,      # 854 waypoints
-        'track_edge': track_edge,        # 341 waypoints
-        'waypoint_count': len(track_data),
+        'track': track_outline,          # 854 waypoints
+        'pit_lane': pit_lane,            # 341 waypoints (optional)
+        'waypoint_count': len(track_outline),
         'source': 'LMU_REST_API'
     }
 ```
 
-### CSV Format
+### CSV Format (REVISED)
 
-**Option B1: Separate Lines (Structured)**
+**Recommended: Track Only**
 ```csv
-TrackMapRacingLine,[[-152.14,-449.12],[-150.23,-445.67],...]
-TrackMapEdge,[[-144.61,-423.79],[-142.45,-420.11],...]
+TrackMap,[[-152.14,-449.12],[-150.23,-445.67],...]
+TrackMapWaypoints,854
+TrackMapSource,LMU_REST_API
+```
+
+**Optional: Track + Pit Lane**
+```csv
+TrackMap,[[-152.14,-449.12],[-150.23,-445.67],...]
+TrackMapPitLane,[[-144.61,-423.79],[-142.45,-420.11],...]
 TrackMapWaypoints,1195
 TrackMapSource,LMU_REST_API
 ```
 
-**Option B2: Combined with Type (Flexible)**
-```csv
-TrackMap,[{"t":0,"x":-152.14,"z":-449.12},{"t":0,"x":-150.23,"z":-445.67},...]
-TrackMapWaypoints,1195
-TrackMapSource,LMU_REST_API
-```
-
-**Recommendation: Option B1 (Structured)** - Easier for lap viewer to parse
+**Recommendation: Track only for MVP** - Simpler, smaller, sufficient for lap visualization
 
 ---
 
 ## What About Types 2-143?
 
-These appear to be **distance/sector markers**:
-- 2 waypoints per type value
-- Highly localized (small spatial clusters)
-- Could represent:
-  - Distance markers every 50-100m
-  - Sector boundaries
-  - DRS zones
-  - Marshal posts
-  - Other track features
+**UPDATED:** Visualization revealed these are **pit bays**:
+- 2 waypoints per pit box (entry/exit points)
+- Clustered along pit lane (Type 1)
+- Form a "ladder" pattern of individual pit positions
+- Total: 76 pit bays × 2 waypoints = 152 waypoints
 
-**For now: IGNORE these types** for basic track outline. They can be added later for advanced features.
+**For lap visualization: IGNORE these types** - pit bay positions not useful for track outline or lap analysis.
 
 ---
 
@@ -248,21 +253,21 @@ These appear to be **distance/sector markers**:
 
 ---
 
-## Open Questions
+## Open Questions ✅ RESOLVED
 
 1. **Is Type 1 the inner or outer edge?**
-   - Spatial analysis shows it's slightly smaller range
-   - Could be inner edge (apex side)
-   - Or: alternative racing line for different conditions
+   - ✅ **RESOLVED:** Type 1 is pit lane, not track edge!
+   - Visualization showed it running parallel to main straight
+   - Separate path with entry and exit to main track
 
 2. **What do the numbered types (2-143) represent?**
-   - Check Swagger docs for enum definition
-   - Test with different tracks to see if pattern consistent
-   - Potential for future enhancement (sector markers, DRS zones)
+   - ✅ **RESOLVED:** Pit bays (individual pit box positions)
+   - 2 waypoints per pit bay (entry/exit points)
+   - Clustered along Type 1 (pit lane)
 
 3. **Does the pattern hold for all tracks?**
-   - Test with different circuits
-   - Some tracks may have different type distributions
+   - Likely yes, but should test with different circuits
+   - All tracks have: main track, pit lane, pit bays
    - Implementation should gracefully handle variations
 
 ---
