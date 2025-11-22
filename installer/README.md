@@ -380,7 +380,7 @@ signtool sign /f "certificate.pfx" /p "password" /t http://timestamp.digicert.co
 - **Inno Setup Documentation:** https://jrsoftware.org/ishelp/
 - **Inno Setup Examples:** `C:\Program Files (x86)\Inno Setup 6\Examples\`
 - **Pascal Scripting Reference:** https://jrsoftware.org/ishelp/index.php?topic=scriptintro
-- **Project Repository:** https://github.com/davedean/eztel-writer
+- **Project Repository:** https://github.com/1Lap/writer
 
 ## Support
 

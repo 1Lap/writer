@@ -67,7 +67,7 @@ This document outlines the implementation plan for adding automatic update funct
 ### Non-Goals
 
 1. Differential/patch updates (always download full .exe)
-2. Multi-repository support (only davedean/eztel-writer)
+2. Multi-repository support (only 1Lap/writer)
 3. Update scheduling (only check on startup)
 4. Forced updates (always require user confirmation)
 
@@ -214,8 +214,8 @@ def is_valid_version(version_str: str) -> bool:
 class UpdateChecker:
     """Check for updates from GitHub releases"""
 
-    REPO_OWNER = "davedean"
-    REPO_NAME = "eztel-writer"
+    REPO_OWNER = "1Lap"
+    REPO_NAME = "writer"
     GITHUB_API = "https://api.github.com/repos/{owner}/{repo}/releases/latest"
 
     def check_for_update(self, current_version: str) -> Optional[dict]:
@@ -843,7 +843,7 @@ def download_update(self, download_url: str, dest_path: Path) -> bool:
    ```
 
 5. **Create GitHub Release**:
-   - Go to https://github.com/davedean/eztel-writer/releases/new
+   - Go to https://github.com/1Lap/writer/releases/new
    - Tag: v1.1.0
    - Title: "LMU Telemetry Logger v1.1.0"
    - Description: Changelog (what's new, bug fixes)
@@ -1070,7 +1070,7 @@ Before starting implementation, clarify:
 
 5. **Auto-install**: Should there be an option for "automatically install updates without asking" (silent updates)?
 
-6. **Repository**: Confirm repository is `davedean/eztel-writer` and releases will be published there.
+6. **Repository**: Confirm repository is `1Lap/writer` and releases will be published there.
 
 7. **Checksum in releases**: Will you include SHA256 checksums in release notes, or should the updater skip verification if not present?
 

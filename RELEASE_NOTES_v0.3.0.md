@@ -169,14 +169,14 @@ Professional installation experience with custom output directory selection!
 ### Windows Users (Recommended)
 
 #### Option 1: Installer (Easiest)
-1. Download `LMU_Telemetry_Logger_Setup.exe` from [GitHub Releases](https://github.com/davedean/eztel-writer/releases)
+1. Download `LMU_Telemetry_Logger_Setup.exe` from [GitHub Releases](https://github.com/1Lap/writer/releases)
 2. Run the installer
 3. Choose installation and output directories
 4. Launch from Start Menu or Desktop
 5. App runs in system tray, automatically starts logging when LMU launches
 
 #### Option 2: Portable Executable
-1. Download `LMU_Telemetry_Logger.zip` from [GitHub Releases](https://github.com/davedean/eztel-writer/releases)
+1. Download `LMU_Telemetry_Logger.zip` from [GitHub Releases](https://github.com/1Lap/writer/releases)
 2. Extract to any folder
 3. Run `LMU_Telemetry_Logger.exe`
 4. Configure settings via tray menu
@@ -195,8 +195,8 @@ Before first use, install LMU runtime dependencies:
 
 ```bash
 # Clone repository
-git clone https://github.com/davedean/eztel-writer.git
-cd eztel-writer
+git clone https://github.com/1Lap/writer.git
+cd writer
 
 # Setup virtual environment
 python3 -m venv venv
@@ -331,7 +331,7 @@ This release represents the completion of Phases 5, 6, and 7 of the LMU Telemetr
 ## 📞 Support
 
 **Questions or Issues?**
-- GitHub Issues: https://github.com/davedean/eztel-writer/issues
+- GitHub Issues: https://github.com/1Lap/writer/issues
 - Documentation: See `USER_GUIDE.md` in installation folder
 
 **Reporting Bugs**:
