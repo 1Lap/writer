@@ -1,181 +1,163 @@
 # Track Map Options - Summary & Recommendation
 
+## ⚠️ UPDATED UNDERSTANDING
+
+**Goal:** ENHANCE the driven line by adding track outline data (not replace it!)
+
+This allows drivers to analyze:
+- Did I hit the apex?
+- Did I use all available track width?
+- How close to track limits?
+- Is my line optimal vs track geometry?
+
+---
+
 ## What We Discovered
 
 ### The lmu-steward-companion Approach
-The referenced project uses the LMU REST API endpoint:
+Uses the LMU REST API endpoint:
 ```
 GET http://localhost:6397/rest/watch/trackmap
 ```
 
-This returns a collection of `Waypoint` objects that represent the track outline.
+Returns waypoints representing the **track outline**.
 
-**Unknown details** (need testing to determine):
-- Waypoint structure (X/Z coordinates? How many per track?)
-- Whether it includes racing line, sector markers, etc.
-- How it compares to our current X/Z position data
+### TinyPedal Approach
+Records track maps as **SVG files** ([see User Guide](https://github.com/TinyPedal/TinyPedal/wiki/User-Guide)):
+- Stores in `TinyPedal\trackmap` folder
+- SVG contains: X,Y position path + distance/elevation path + sector indices
+- Records by driving laps (mapping module)
 
 ### Our Current Approach
 We capture X/Z coordinates from LMU shared memory for every telemetry sample:
-- **Frequency**: ~100Hz (every sample, ~11,000 per lap)
-- **Fields**: `X [m]`, `Z [m]` (2D plane for track mapping)
+- **Frequency**: ~100Hz (~11,000 per lap)
+- **Fields**: `X [m]`, `Z [m]` (driven line)
 - **Source**: `mPos` field from shared memory
-- **Size**: 2 columns × 11,000 rows = part of our ~1MB CSV
 
-**Lap viewer requirements**:
-- Browser-based tool (drag CSV onto `index.html`)
-- Needs X/Z coordinates to draw track map
-- Uses position data to show driven line and car location during replay
+**This is good! We need to KEEP this data for the driven line.**
 
-## Three Options to Consider
+---
 
-### Option 1: Status Quo (RECOMMENDED)
-**Keep using X/Z from telemetry samples**
+## NEW Goal: Add Track Outline to Driven Line
+
+### Recommended Approach: REST API + Embedded Waypoints
+
+**Fetch track waypoints from REST API, embed in CSV metadata, keep X/Z samples**
 
 ```
-✅ Already working
-✅ Shows actual driven line (not just track outline)
-✅ No REST API dependency
-✅ Works offline
-✅ Self-contained CSV files
-✅ Shows off-track excursions, pit lane, variants
+✅ Track outline + actual driven line (both!)
+✅ Analyze apex usage, track width usage
+✅ Self-contained CSV files (no external dependencies)
+✅ REST API fetch happens during session (when it's running anyway)
+✅ Lap viewer can cache maps to avoid re-parsing
+✅ Works offline after data is embedded
 
-❌ Larger CSV files (~1MB per lap)
-❌ Redundant if multiple laps on same track
+⚠️ Slightly larger CSV files (+ waypoints in metadata)
+⚠️ Need to test REST API endpoint format first
+⚠️ Moderate implementation effort
 ```
 
-**Best for**: Current use case where we want to see exactly where the driver went
-
 ---
 
-### Option 2: Replace with Track Map Library
-**Fetch track maps via REST API, build a library, reference by track name**
+## Implementation Plan
 
-```
-✅ Smaller CSV files (remove X/Z columns)
-✅ Standardized track outlines
-✅ Could enhance with racing line, sectors, DRS zones
-
-❌ Loses actual driven line
-❌ Requires REST API running during session
-❌ Need to build/maintain track map library
-❌ Breaks offline workflow
-❌ Can't see where driver went off-track
-❌ Doesn't work for track variants or pit lane
+### Step 1: Test REST API Endpoint (NOW)
+Run with LMU to see waypoint format:
+```bash
+python test_trackmap_endpoint.py
 ```
 
-**Best for**: If file size is critical AND you only need track outline (not actual driven path)
+Also check Swagger docs: `http://localhost:6397/swagger/index.html`
 
----
-
-### Option 3: Hybrid Approach
-**Include track map waypoints in metadata + keep X/Z in samples**
-
-```
-✅ Best of both worlds
-✅ Track outline + actual driven line
-✅ Can highlight deviations from ideal line
-✅ Fallback if track map not available
-
-❌ Largest CSV files (waypoints in metadata + X/Z in samples)
-❌ More complex lap viewer logic
-❌ REST API dependency
-❌ Additional implementation effort
+### Step 2: Design Data Structure
+Add to CSV metadata:
+```csv
+Format,LMUTelemetry v3
+TrackMap,[[-269.27,-218.97],[-268.11,-218.52],...]
+TrackMapSource,LMU_REST_API
 ```
 
-**Best for**: Advanced analysis (compare driven line vs. ideal line)
+### Step 3: Implement
+1. Add `get_trackmap()` to `LMURestAPI` class
+2. Fetch once per session, cache by track name
+3. Include in CSV metadata
+4. Update CSV formatter
+
+### Step 4: Lap Viewer Integration
+- Render track outline as background
+- Overlay driven line (from X/Z samples)
+- Show deviations and apex analysis
 
 ---
 
-## Recommendation: **Keep Status Quo (Option 1)**
+## Alternative: TinyPedal-Style Recording
 
-**Why:**
-
-1. **Actual driven line is valuable**
-   - See exactly where the driver went
-   - Identify off-track excursions
-   - Show pit lane entry/exit
-   - Handle track variants correctly
-
-2. **File size is not a problem**
-   - ~1MB per lap is small by modern standards
-   - Storage is cheap
-   - CSV compresses well (gzip can reduce by 70-80%)
-
-3. **Simplicity**
-   - One data source (shared memory)
-   - No REST API dependency
-   - Works offline
-   - Self-contained files
-
-4. **Already working**
-   - No implementation effort
-   - No risk of regression
-   - Proven in production
-
-**When to reconsider:**
-
-- **If file size becomes critical** (unlikely - 1MB is tiny)
-- **If we add racing line analysis** (then consider Option 3)
-- **If lap viewer needs standardized track outlines** (for track limits, sector markers)
-- **If building multi-session analysis tools** (shared track maps reduce redundancy)
+If REST API doesn't provide good data, we can:
+1. Create "track map recording mode"
+2. Save maps as JSON/SVG files
+3. Build library over time
+4. See [TinyPedal approach](https://github.com/TinyPedal/TinyPedal/wiki/User-Guide) for reference
 
 ---
 
-## Testing Next Steps (Optional)
+## Why This is Better Than Status Quo
 
-If you want to explore the REST API approach anyway:
+**Current:**
 
-1. **Run the test script on Windows**:
-   ```bash
-   python test_trackmap_endpoint.py
-   ```
+- Only shows driven line (X/Z samples)
+- Can't see track outline, apex points, track limits
 
-2. **Analyze the waypoint structure**:
-   - How many waypoints per track?
-   - What fields are included?
-   - How do they compare to our X/Z samples?
+**With track outline:**
+- ✅ Shows driven line AND track outline
+- ✅ Analyze apex usage ("did I hit it?")
+- ✅ Track width usage ("did I use all available space?")
+- ✅ Compare optimal vs actual line
+- ✅ Better coaching and self-improvement tool
 
-3. **Share the output** so we can evaluate if waypoints provide value
-
-4. **If waypoints look useful**, we could:
-   - Add optional track map waypoints to metadata (Option 3)
-   - Keep X/Z in samples for driven line
-   - Enhance lap viewer to show both track outline + driven line
+**File size impact:**
+- Waypoints: ~150-300 waypoints × 2 coords = ~600-1200 bytes (~1KB!)
+- Negligible compared to ~1MB CSV file
+- Total increase: < 0.1%
 
 ---
 
-## Implementation Effort Comparison
+## Next Steps - Testing Required!
 
-| Option | Effort | Risk | Value |
-|--------|--------|------|-------|
-| **Option 1 (Status Quo)** | None ✅ | None ✅ | High (actual driven line) ✅ |
-| **Option 2 (Library)** | High (REST client, library, lap viewer changes) | High (lose driven line data) | Low (marginal file size savings) |
-| **Option 3 (Hybrid)** | High (REST client, metadata format, lap viewer changes) | Medium (added complexity) | Medium (racing line comparison) |
+### 1. Test REST API Endpoint
+```bash
+python test_trackmap_endpoint.py
+```
 
----
+**Questions to answer:**
+- How many waypoints per track?
+- What fields are in each waypoint?
+- Do coordinates match our X/Z system?
+- Is there sector/racing line data?
 
-## Conclusion
+### 2. Check Swagger Documentation
+Visit `http://localhost:6397/swagger/index.html` while LMU is running
 
-**Stick with the current approach.** We already capture X/Z coordinates from shared memory, which provides:
-- Accurate representation of the actual driven line
-- Self-contained CSV files that work offline
-- Proven functionality with the lap viewer
-- Acceptable file size (~1MB per lap)
-
-The REST API track map approach might be useful for:
-- Building a separate track database
-- Adding racing line reference data
-- Multi-lap session analysis
-
-But for our current use case (single lap telemetry export), the added complexity doesn't justify the marginal benefits.
+### 3. Share Results
+Post the output so we can design the optimal data structure
 
 ---
 
-## Files Created for Reference
+## Files Created
 
-- **`test_trackmap_endpoint.py`** - Test script to explore the REST API endpoint
-- **`TRACK_MAP_APPROACH_ANALYSIS.md`** - Detailed analysis of all approaches
-- **`TRACK_MAP_OPTIONS_SUMMARY.md`** - This summary document
+- ✅ **`TRACK_OUTLINE_IMPLEMENTATION.md`** - Complete implementation plan
+- ✅ **`test_trackmap_endpoint.py`** - Test script for REST API
+- ✅ **`TRACK_MAP_APPROACH_ANALYSIS.md`** - Detailed analysis
+- ✅ **`TRACK_MAP_OPTIONS_SUMMARY.md`** - This summary (updated)
 
-If you want to proceed with testing the REST API approach, run the test script and share the output!
+---
+
+## Sources
+
+- [TinyPedal User Guide](https://github.com/TinyPedal/TinyPedal/wiki/User-Guide) - Track map recording and SVG format
+- [TinyPedal Track Map Widget](https://github.com/IceNbrn/TinyPedal_LMU/blob/6a37edace5a0230fba4245f609416717710644b4/tinypedal/widget/track_map.py) - Implementation reference
+- [lmu-steward-companion](https://github.com/supaflyENJOY/lmu-steward-companion/blob/13cdd75a714d34ca7d060def69be470fb18af5f5/src-tauri/src/lmu_rest_api/client.rs#L491) - REST API example
+- [Le Mans Ultimate Community - REST API Discussion](https://community.lemansultimate.com/index.php?threads%2Frest-api-documentation.3278%2F=)
+
+---
+
+**Updated:** 2025-11-22 - Corrected to reflect goal of ENHANCING driven line with track outline (not replacing)
