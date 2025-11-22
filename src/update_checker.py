@@ -37,8 +37,8 @@ class UpdateChecker:
         GITHUB_API: Full GitHub API URL for latest release
     """
 
-    REPO_OWNER = "davedean"
-    REPO_NAME = "eztel-writer"
+    REPO_OWNER = "1Lap"
+    REPO_NAME = "writer"
     GITHUB_API = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases/latest"
 
     def check_for_update(self, current_version: str) -> Optional[dict]:
