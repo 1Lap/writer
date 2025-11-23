@@ -212,6 +212,15 @@ class TestTrayUI(unittest.TestCase):
         # Should call show_settings_dialog and return True
         mock_show_settings.assert_called_once()
 
+    @patch('src.tray_ui.webbrowser.open')
+    def test_on_open_viewer_opens_browser(self, mock_webbrowser_open):
+        """Test on_open_viewer opens the 1Lap viewer in default browser"""
+        tray = TrayUI(self.mock_app)
+        tray._open_viewer()
+
+        # Should call webbrowser.open with the viewer URL
+        mock_webbrowser_open.assert_called_once_with('https://1lap.github.io/viewer/')
+
 
 if __name__ == '__main__':
     unittest.main()
