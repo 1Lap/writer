@@ -3,6 +3,7 @@
 import os
 import sys
 import subprocess
+import webbrowser
 from typing import Any, Optional
 from PIL import Image, ImageDraw
 import pystray
@@ -85,6 +86,7 @@ class TrayUI:
             ),
             Item('Open Output Folder', self.on_open_folder),
             Item('Open Log File', self.on_open_log_file),
+            Item('Open Viewer', self._open_viewer),
             pystray.Menu.SEPARATOR,
             Item('Settings...', self.on_settings),
             Item('Check for Updates...', self.on_check_for_updates),
@@ -203,6 +205,10 @@ class TrayUI:
         else:  # Linux
             # On Linux, open with default text editor
             subprocess.run(['xdg-open', log_file])
+
+    def _open_viewer(self):
+        """Open the 1Lap web viewer in default browser"""
+        webbrowser.open('https://1lap.github.io/viewer/')
 
     def on_settings(self):
         """Handle Settings menu click"""

@@ -1,3 +1,17 @@
+## Status: ✅ RESOLVED
+
+**Resolved:** 2025-11-23
+**Branch:** fix/rest-api-session-caching
+**Tests:** 18/18 passing in test_tray_ui.py (added 1 new test)
+
+**Solution:** Added `_open_viewer()` method to TrayUI class that uses Python's built-in `webbrowser` module to open https://1lap.github.io/viewer/ in the default browser. Menu item positioned after "Open Log File" and before the separator, as suggested.
+
+**Files Modified:**
+- `src/tray_ui.py` - Added webbrowser import, `_open_viewer()` method, and menu item
+- `tests/test_tray_ui.py` - Added test for the new functionality
+
+---
+
 # Open Viewer Menu Option - Feature Request
 
 **Date Reported:** 2025-11-23
