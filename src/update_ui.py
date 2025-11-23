@@ -147,6 +147,11 @@ class UpdateDialog:
         y = (self.root.winfo_screenheight() // 2) - (height // 2)
         self.root.geometry(f'{width}x{height}+{x}+{y}')
 
+        # Configure window to stay on top and be modal-like
+        self.root.lift()
+        self.root.attributes('-topmost', True)
+        self.root.after_idle(self.root.attributes, '-topmost', False)
+
         # Make dialog modal
         self.root.grab_set()
 
@@ -159,6 +164,8 @@ class UpdateDialog:
         """Handle Install button click."""
         self.result = 'install'
         if self.root:
+            # Properly cleanup: release grab, quit mainloop, then destroy
+            self.root.grab_release()
             self.root.quit()
             self.root.destroy()
 
@@ -166,6 +173,8 @@ class UpdateDialog:
         """Handle Skip button click."""
         self.result = 'skip'
         if self.root:
+            # Properly cleanup: release grab, quit mainloop, then destroy
+            self.root.grab_release()
             self.root.quit()
             self.root.destroy()
 
@@ -173,6 +182,8 @@ class UpdateDialog:
         """Handle Remind Later button click."""
         self.result = 'later'
         if self.root:
+            # Properly cleanup: release grab, quit mainloop, then destroy
+            self.root.grab_release()
             self.root.quit()
             self.root.destroy()
 

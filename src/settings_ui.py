@@ -327,6 +327,9 @@ class SettingsDialog:
         try:
             self.config.save()
             self.result = True
+            # Properly cleanup: release grab, quit mainloop, then destroy
+            self.root.grab_release()
+            self.root.quit()
             self.root.destroy()
         except IOError as e:
             self.messagebox.showerror("Save Error", f"Failed to save config: {str(e)}")
@@ -334,6 +337,9 @@ class SettingsDialog:
     def _on_cancel(self):
         """Handle Cancel button click"""
         self.result = False
+        # Properly cleanup: release grab, quit mainloop, then destroy
+        self.root.grab_release()
+        self.root.quit()
         self.root.destroy()
 
     def _on_restore_defaults(self):
@@ -355,8 +361,16 @@ class SettingsDialog:
         Returns:
             True if user clicked Save, False if cancelled
         """
-        # Make dialog modal
-        self.root.transient()
+        # Make dialog modal (only if we have a parent)
+        # Note: transient() without a parent argument is invalid
+        # We don't set transient here since we create our own root/toplevel
+
+        # Configure window to stay on top and be modal-like
+        self.root.lift()
+        self.root.attributes('-topmost', True)
+        self.root.after_idle(self.root.attributes, '-topmost', False)
+
+        # Grab input focus to make modal
         self.root.grab_set()
 
         # Center on screen

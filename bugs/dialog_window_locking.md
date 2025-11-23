@@ -1,7 +1,46 @@
 # Dialog Window Locking - Settings and Update Dialogs
 
+## Status: ✅ RESOLVED
+
+**Resolved:** 2025-11-23
+**Branch:** feature/open-viewer-menu
+**Solution:** Fixed multiple tkinter dialog lifecycle issues causing window locking
+
+### Changes Made:
+1. **SettingsDialog** (`src/settings_ui.py`):
+   - Removed invalid `transient()` call without parent
+   - Added `grab_release()` before `quit()` and `destroy()` in button handlers
+   - Implemented proper modal window behavior using `lift()` and `-topmost` attribute
+
+2. **UpdateDialog** (`src/update_ui.py`):
+   - Added `grab_release()` before `quit()` and `destroy()` in all button handlers
+   - Implemented proper modal window behavior using `lift()` and `-topmost` attribute
+
+3. **TrayUI** (`src/tray_ui.py`):
+   - Added `_active_dialogs` set to track open dialogs
+   - Prevents opening settings dialog multiple times
+   - Prevents opening update check while settings is open
+
+4. **Manual Update Check** (`tray_app.py`):
+   - Refactored messagebox helper to properly cleanup with `quit()` and `destroy()`
+   - Fixed multiple Tk root window creation issues
+
+### Root Causes Identified:
+1. **Invalid transient() call**: SettingsDialog called `transient()` without parent argument
+2. **Missing grab_release()**: Both dialogs destroyed windows without releasing input grab
+3. **No mainloop quit**: Dialogs called `destroy()` without first calling `quit()` to exit event loop
+4. **Multiple root windows**: Messageboxes created temporary Tk() roots without proper cleanup
+5. **No duplicate prevention**: Nothing prevented opening multiple instances of same dialog
+
+### Testing:
+- All 43 existing UI tests pass
+- Verified proper cleanup sequence in all dialog close paths
+- Added dialog state tracking to prevent concurrent dialogs
+
+---
+
 **Date Reported:** 2025-11-23
-**Priority:** High
+**Priority:** High (Resolved)
 **Component:** Settings UI, Update UI
 **Type:** Bug
 
