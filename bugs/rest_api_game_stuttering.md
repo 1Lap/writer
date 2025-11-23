@@ -1,7 +1,26 @@
+## Status: ✅ RESOLVED
+
+**Resolved:** 2025-11-23
+**Solution:** Implemented on_session_start callback to fetch REST API data once per session instead of on every lap completion
+
+**Implementation Details:**
+- Added `on_session_start` callback to `TelemetryLoop` (triggered on DETECTED → LOGGING transition)
+- Implemented session-level caching in both `example_app.py` and `tray_app.py`
+- REST API calls (track map and vehicle metadata) now happen ONCE when session starts
+- Lap completion callback now uses cached session data instead of making API calls
+- All 198 tests passing, no regressions
+
+**Files Changed:**
+- `src/telemetry_loop.py` - Added on_session_start callback support
+- `example_app.py` - Implemented session-level caching of REST API data
+- `tray_app.py` - Implemented session-level caching of REST API data
+
+---
+
 # REST API Causes Game Stuttering - Cache Track Map on Session Start
 
 **Date Reported:** 2025-11-23
-**Priority:** High
+**Priority:** High (RESOLVED)
 **Component:** REST API Integration, Session Management
 **Type:** Performance Bug
 

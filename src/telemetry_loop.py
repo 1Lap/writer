@@ -28,6 +28,7 @@ class TelemetryLoop:
             config: Configuration dictionary with optional keys:
                 - target_process: Process name to monitor (default: "LMU.exe")
                 - poll_interval: Seconds between polls (default: 0.01 for ~100Hz)
+                - on_session_start: Callback function() - called once when session starts
                 - on_lap_complete: Callback function(lap_data, lap_summary, session_info)
                 - on_opponent_lap_complete: Callback function(opponent_lap_data)
                 - track_opponents: Enable opponent tracking (default: True)
@@ -55,6 +56,7 @@ class TelemetryLoop:
         self.opponent_tracker = OpponentTracker(track_remote_only=not track_ai, track_ai=track_ai)
 
         # Callbacks
+        self.on_session_start = self.config.get('on_session_start', None)
         self.on_lap_complete = self.config.get('on_lap_complete', None)
         self.on_opponent_lap_complete = self.config.get('on_opponent_lap_complete', None)
 
@@ -207,6 +209,10 @@ class TelemetryLoop:
             if self.session_manager.state == SessionState.DETECTED:
                 self.session_manager.state = SessionState.LOGGING
                 self.session_manager.current_session_id = self.session_manager.generate_session_id()
+
+                # Trigger session start callback (for one-time initialization)
+                if self.on_session_start:
+                    self.on_session_start()
 
             # Add sample to buffer
             self.session_manager.add_sample(telemetry, timestamp=current_time)

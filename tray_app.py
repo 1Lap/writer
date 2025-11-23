@@ -102,15 +102,20 @@ class TrayTelemetryApp:
         self.file_manager = FileManager({'output_dir': self.config['output_dir']})
         self.telemetry_reader = get_telemetry_reader()
 
-        # Initialize telemetry loop with lap completion callback
+        # Initialize telemetry loop with callbacks
         self.telemetry_loop = TelemetryLoop({
             'target_process': self.config['target_process'],
             'poll_interval': self.config['poll_interval'],
+            'on_session_start': self.on_session_start,
             'on_lap_complete': self.on_lap_complete,
             'on_opponent_lap_complete': self.on_opponent_lap_complete,
             'track_opponents': self.config.get('track_opponents', True),
             'track_opponent_ai': self.config.get('track_opponent_ai', False),
         })
+
+        # Session-level cached data (fetched once per session, not per lap)
+        self.session_trackmap = None
+        self.session_vehicle_meta = None
 
         # Track statistics
         self.laps_saved = 0
@@ -135,6 +140,39 @@ class TrayTelemetryApp:
         if self.update_manager.should_check_for_updates():
             self.update_manager.check_for_updates_async(self.on_update_checked)
 
+    def on_session_start(self):
+        """
+        Callback when a new session starts (DETECTED → LOGGING transition)
+
+        Fetches REST API data ONCE per session (not per lap) to avoid game stuttering.
+        """
+        # Clear previous session data
+        self.session_trackmap = None
+        self.session_vehicle_meta = None
+
+        # Fetch REST API data if available
+        if hasattr(self.telemetry_reader, 'rest_api') and self.telemetry_reader.rest_api:
+            if hasattr(self.telemetry_reader, 'ensure_rest_api_data'):
+                self.telemetry_reader.ensure_rest_api_data()
+
+            session_info = self.telemetry_reader.get_session_info()
+
+            # Fetch vehicle metadata (once per session)
+            car_name = session_info.get('car_name')
+            if car_name:
+                self.session_vehicle_meta = self.telemetry_reader.rest_api.lookup_vehicle(car_name)
+                if self.session_vehicle_meta:
+                    logger.info(f"Session Start: Fetched vehicle metadata for {car_name}")
+
+            # Fetch track map (once per session)
+            track_name = session_info.get('track_name', '')
+            if track_name:
+                self.session_trackmap = self.telemetry_reader.rest_api.get_trackmap(track_name=track_name)
+                if self.session_trackmap:
+                    logger.info(f"Session Start: Fetched track map for {track_name}")
+
+        logger.info("Session Start: REST API data cached")
+
     def on_lap_complete(self, lap_data, lap_summary):
         """
         Callback when a lap is completed
@@ -158,19 +196,18 @@ class TrayTelemetryApp:
         session_info = self.telemetry_reader.get_session_info()
         session_info['session_id'] = self.telemetry_loop.session_manager.current_session_id
 
-        # Enrich with REST API data if available
-        if hasattr(self.telemetry_reader, 'rest_api') and self.telemetry_reader.rest_api:
-            if hasattr(self.telemetry_reader, 'ensure_rest_api_data'):
-                self.telemetry_reader.ensure_rest_api_data()
+        # Enrich with cached REST API data (fetched once per session in on_session_start)
+        if self.session_vehicle_meta:
+            session_info['car_model'] = self.session_vehicle_meta.get('car_model', '')
+            session_info['manufacturer'] = self.session_vehicle_meta.get('manufacturer', '')
+            session_info['car_class'] = self.session_vehicle_meta.get('class', '')
+            session_info['team_name'] = self.session_vehicle_meta.get('team', '')
 
-            car_name = session_info.get('car_name')
-            if car_name:
-                vehicle_meta = self.telemetry_reader.rest_api.lookup_vehicle(car_name)
-                if vehicle_meta:
-                    session_info['car_model'] = vehicle_meta.get('car_model', '')
-                    session_info['manufacturer'] = vehicle_meta.get('manufacturer', '')
-                    session_info['car_class'] = vehicle_meta.get('class', '')
-                    session_info['team_name'] = vehicle_meta.get('team', '')
+        if self.session_trackmap:
+            session_info['track_map'] = self.session_trackmap.get('track', [])
+            session_info['track_map_pit_lane'] = self.session_trackmap.get('pit_lane', [])
+            session_info['track_map_waypoints'] = self.session_trackmap.get('waypoint_count', 0)
+            session_info['track_map_source'] = self.session_trackmap.get('source', '')
 
         # Detect sector boundaries
         track_length = session_info.get('track_length', 0.0)
