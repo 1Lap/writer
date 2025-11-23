@@ -34,6 +34,9 @@ class TrayUI:
         self.icon = None
         self.state = SessionState.IDLE
 
+        # Track active dialogs to prevent multiple instances
+        self._active_dialogs = set()
+
         # Create icon images for different states
         self.icons = {
             SessionState.IDLE: self._create_icon_image('gray'),
@@ -212,14 +215,27 @@ class TrayUI:
 
     def on_settings(self):
         """Handle Settings menu click"""
-        # Show settings dialog (will block until closed)
-        changed = show_settings_dialog()
+        # Check if settings dialog is already open
+        if 'settings' in self._active_dialogs:
+            return False  # Already open, do nothing
 
-        # Return True if settings were changed (for potential future use)
-        return changed
+        # Mark dialog as active
+        self._active_dialogs.add('settings')
+
+        try:
+            # Show settings dialog (will block until closed)
+            changed = show_settings_dialog()
+            return changed
+        finally:
+            # Remove from active dialogs when closed
+            self._active_dialogs.discard('settings')
 
     def on_check_for_updates(self):
         """Handle Check for Updates menu click"""
+        # Check if any dialog is already open
+        if self._active_dialogs:
+            return  # Dialog already open, do nothing
+
         if hasattr(self.app, 'check_for_updates_manual'):
             self.app.check_for_updates_manual()
 

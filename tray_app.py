@@ -381,25 +381,40 @@ class TrayTelemetryApp:
 
         logger.info("Checking for updates...")
 
+        def show_messagebox(msg_type, title, message):
+            """Helper to show messagebox with proper cleanup"""
+            try:
+                root = tk.Tk()
+                root.withdraw()  # Hide the main window
+                root.lift()  # Bring to front
+                root.attributes('-topmost', True)
+                root.after_idle(root.attributes, '-topmost', False)
+
+                if msg_type == 'warning':
+                    messagebox.showwarning(title, message, parent=root)
+                elif msg_type == 'info':
+                    messagebox.showinfo(title, message, parent=root)
+
+                # Properly cleanup
+                root.quit()
+                root.destroy()
+            except Exception as e:
+                logger.error(f"Could not show {msg_type} dialog: {e}")
+
         def on_checked(update_info):
             if update_info is None:
                 logger.warning("Could not check for updates (network error or GitHub API unavailable)")
                 # Show user-friendly error dialog
-                try:
-                    root = tk.Tk()
-                    root.withdraw()  # Hide the main window
-                    messagebox.showwarning(
-                        "Update Check Failed",
-                        "Could not check for updates.\n\n"
-                        "Possible causes:\n"
-                        "• No internet connection\n"
-                        "• GitHub API is unavailable\n"
-                        "• Network timeout\n\n"
-                        "Please try again later or check your internet connection."
-                    )
-                    root.destroy()
-                except Exception as e:
-                    logger.error(f"Could not show error dialog: {e}")
+                show_messagebox(
+                    'warning',
+                    "Update Check Failed",
+                    "Could not check for updates.\n\n"
+                    "Possible causes:\n"
+                    "• No internet connection\n"
+                    "• GitHub API is unavailable\n"
+                    "• Network timeout\n\n"
+                    "Please try again later or check your internet connection."
+                )
             elif update_info.get('available'):
                 logger.info(f"Update available: {update_info['latest_version']}")
                 # Show dialog
@@ -407,17 +422,12 @@ class TrayTelemetryApp:
             else:
                 logger.info("Already using the latest version")
                 # Show confirmation that check was successful
-                try:
-                    root = tk.Tk()
-                    root.withdraw()
-                    messagebox.showinfo(
-                        "No Updates Available",
-                        f"You are already using the latest version.\n\n"
-                        f"Current version: {update_info['current_version']}"
-                    )
-                    root.destroy()
-                except Exception as e:
-                    logger.error(f"Could not show info dialog: {e}")
+                show_messagebox(
+                    'info',
+                    "No Updates Available",
+                    f"You are already using the latest version.\n\n"
+                    f"Current version: {update_info['current_version']}"
+                )
 
         self.update_manager.check_for_updates_async(on_checked)
 
