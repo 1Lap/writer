@@ -79,10 +79,13 @@ class UpdateChecker:
             changelog = release.get('body', '')
             release_date = release.get('published_at', '')
 
-            # Find .exe asset in release
+            # Find .exe asset in release (skip installer files)
             download_url = None
             for asset in release.get('assets', []):
-                if asset['name'].endswith('.exe'):
+                name = asset['name']
+                # Skip installer files (contain "Setup" in the name)
+                # We want the standalone exe, not the installer
+                if name.endswith('.exe') and 'Setup' not in name:
                     download_url = asset['browser_download_url']
                     break
 

@@ -113,6 +113,11 @@ jobs:
         $installerFile = "installer\output\1Lap_Setup_v${{ steps.get_version.outputs.version }}.exe"
         Copy-Item $installerFile "release\"
 
+        # Copy the standalone exe (for auto-updater) - using dynamic version
+        $standaloneExe = "dist\1Lap\1Lap.exe"
+        $standaloneTarget = "release\1Lap_v${{ steps.get_version.outputs.version }}.exe"
+        Copy-Item $standaloneExe $standaloneTarget
+
         # Create a zip of the standalone executable bundle for advanced users
         Compress-Archive -Path "dist\1Lap\*" -DestinationPath "release\1Lap_Standalone.zip" -Force
 
@@ -215,6 +220,7 @@ jobs:
       with:
         files: |
           installer/output/1Lap_Setup_v${{ steps.get_version.outputs.version }}.exe
+          release/1Lap_v${{ steps.get_version.outputs.version }}.exe
           release/1Lap_Standalone.zip
           README.md
           USER_GUIDE.md

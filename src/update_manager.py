@@ -179,7 +179,7 @@ class UpdateManager:
 
             # Download to temp directory
             temp_dir = Path(tempfile.gettempdir())
-            new_exe = temp_dir / f"LMU_Telemetry_Logger_{version}.exe"
+            new_exe = temp_dir / f"1Lap_{version}.exe"
 
             logger.info(f"Downloading update from {download_url}")
             success = self.checker.download_update(download_url, new_exe)
