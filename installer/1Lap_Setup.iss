@@ -3,7 +3,7 @@
 
 ; Read version from command line if provided, otherwise use default
 #ifndef MyAppVersion
-  #define MyAppVersion "0.3.3"
+  #define MyAppVersion "0.3.4"
 #endif
 
 #define MyAppName "1Lap"
