@@ -1,0 +1,16 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background rounded square -->
+  <rect x="64" y="64" width="896" height="896" rx="180" fill="#0B0E14"/>
+
+  <!-- Tilted track (20° rotation) - GREEN for logging -->
+  <ellipse cx="512" cy="540" rx="330" ry="220"
+           transform="rotate(-20 512 540)"
+           stroke="#22C55E" stroke-width="90" stroke-linecap="round"/>
+
+  <!-- Centered "1" - WHITE -->
+  <path d="M512 300 L460 345 M512 300 L512 780"
+        stroke="#FFFFFF" stroke-width="115" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Car position dot - GREEN for logging -->
+  <circle cx="800" cy="460" r="55" fill="#22C55E"/>
+</svg>

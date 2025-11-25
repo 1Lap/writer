@@ -48,7 +48,7 @@ class TrayUI:
 
     def _create_icon_image(self, color: str) -> Image.Image:
         """
-        Create icon image with specified color
+        Load icon image for specified state
 
         Args:
             color: Color name (gray, yellow, green, orange, red)
@@ -56,24 +56,45 @@ class TrayUI:
         Returns:
             PIL Image object
         """
-        # Color map
-        color_map = {
-            'gray': (128, 128, 128),
-            'yellow': (255, 215, 0),
-            'green': (0, 200, 0),
-            'orange': (255, 165, 0),
-            'red': (255, 0, 0),
+        # Map color names to icon filenames
+        icon_map = {
+            'gray': 'icon_idle.png',
+            'yellow': 'icon_detecting.png',
+            'green': 'icon_logging.png',
+            'orange': 'icon_paused.png',
+            'red': 'icon_error.png',
         }
 
-        # Create 64x64 image with white background
-        img = Image.new('RGB', (64, 64), color='white')
-        draw = ImageDraw.Draw(img)
+        icon_filename = icon_map.get(color, 'icon_idle.png')
 
-        # Draw colored circle
-        rgb_color = color_map.get(color, (128, 128, 128))
-        draw.ellipse([8, 8, 56, 56], fill=rgb_color)
+        # Determine icon path (handle both script and frozen executable)
+        if getattr(sys, 'frozen', False):
+            # Running as compiled executable
+            base_path = sys._MEIPASS
+        else:
+            # Running as script - icons are in assets/icons relative to project root
+            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-        return img
+        icon_path = os.path.join(base_path, 'assets', 'icons', icon_filename)
+
+        # Load icon image
+        try:
+            img = Image.open(icon_path)
+            return img
+        except FileNotFoundError:
+            # Fallback: create simple colored circle if icon file not found
+            img = Image.new('RGB', (64, 64), color='white')
+            draw = ImageDraw.Draw(img)
+            color_map = {
+                'gray': (156, 163, 175),  # #9CA3AF
+                'yellow': (245, 158, 11),  # #F59E0B
+                'green': (34, 197, 94),  # #22C55E
+                'orange': (249, 115, 22),  # #F97316
+                'red': (239, 68, 68),  # #EF4444
+            }
+            rgb_color = color_map.get(color, (156, 163, 175))
+            draw.ellipse([8, 8, 56, 56], fill=rgb_color)
+            return img
 
     def create_icon(self):
         """Create system tray icon with menu"""

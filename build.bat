@@ -17,8 +17,9 @@ echo.
 echo Building with PyInstaller...
 python -m PyInstaller --onedir --noconsole ^
     --name "1Lap" ^
-    --icon=NONE ^
+    --icon="assets\icons\1Lap.ico" ^
     --add-data "src;src" ^
+    --add-data "assets;assets" ^
     --hidden-import psutil ^
     --hidden-import datetime ^
     --hidden-import pystray ^
